@@ -37,8 +37,8 @@ void fillHistos (ifstream & ifs)
   TH1F h_jeta ("h_jeta", "h_jeta", 100, -5, 5) ;
   TH1F h_j1eta ("h_j1eta", "h_j1eta", 100, -5, 5) ;
   TH1F h_j2eta ("h_j2eta", "h_j2eta", 100, -5, 5) ;
-  TH1F h_j1pt ("h_j1pt", "h_j1pt", 100, 0, 200) ;
-  TH1F h_j2pt ("h_j2pt", "h_j2pt", 100, 0, 200) ;
+  TH1F h_j1pt ("h_j1pt", "h_j1pt", 100, 0, 500) ;
+  TH1F h_j2pt ("h_j2pt", "h_j2pt", 100, 0, 500) ;
 
   long ieve = 0 ;
   while ( reader.readEvent() ) 
