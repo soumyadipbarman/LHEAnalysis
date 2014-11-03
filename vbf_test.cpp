@@ -129,7 +129,8 @@ int main (int argc, char **argv)
 {
   ifstream ifs ;
 
-  ifs.open ("../h_qqH_WW_2L2NU_170.lhe") ; fillHistos (ifs) ; ifs.close () ;
+//  ifs.open ("../h_qqH_WW_3L2NU_170.lhe") ; fillHistos (ifs) ; ifs.close () ;
+  ifs.open (argv[1]) ; fillHistos (ifs) ; ifs.close () ;
   
   // Now we are done.
   return 0 ;
