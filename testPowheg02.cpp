@@ -5,6 +5,8 @@
 #include "TFile.h"
 #include "THStack.h"
 #include "TCanvas.h"
+#include "TStyle.h"
+#include "TLegend.h"
 #include "TLorentzVector.h"
 #include <cmath>
 #include "hFactory.h"
@@ -128,19 +130,20 @@ readSample (string sampleName, string radice, int maxevents = -1)
   
   map<string, TH1F *> histos ;
 
-  TH1F * h_higgs_eta = addHistoToMap (histos, string ("higgs_eta_")  + radice, 50, -6, 6) ;
+  TH1F * h_higgs_eta = addHistoToMap (histos, string ("higgs_eta_")  + radice, 40, -6, 6) ;
   TH1F * h_higgs_pt  = addHistoToMap (histos, string ("higgs_pt_")   + radice, 100, 0, 500) ;
-  TH1F * h_higgs_phi = addHistoToMap (histos, string ("higgs_phi_")  + radice, 50, -3.14, 3.14) ;
+  TH1F * h_higgs_phi = addHistoToMap (histos, string ("higgs_phi_")  + radice, 30, -3.14, 3.14) ;
 
-  TH1F * h_vbf0_eta = addHistoToMap (histos, string ("vbf0_eta_")  + radice, 50, -6, 6) ;
-  TH1F * h_vbf0_pt  = addHistoToMap (histos, string ("vbf0_pt_")   + radice, 100, 0, 500) ;
-  TH1F * h_vbf0_phi = addHistoToMap (histos, string ("vbf0_phi_")  + radice, 50, -3.14, 3.14) ;
-
-  TH1F * h_vbf1_eta = addHistoToMap (histos, string ("vbf1_eta_")  + radice, 50, -6, 6) ;
-  TH1F * h_vbf1_pt  = addHistoToMap (histos,  string ("vbf1_pt_")  + radice, 100, 0, 500) ;
-  TH1F * h_vbf1_phi = addHistoToMap (histos, string ("vbf1_phi_")  + radice, 50, -3.14, 3.14) ;
-
-  TH1F * h_mjj_vbf  = addHistoToMap (histos, string ("mjj_vbf_")   + radice, 50, 0, 5000) ;
+  TH1F * h_vbf0_eta  = addHistoToMap (histos, string ("vbf0_eta_")   + radice, 40, -6, 6) ;
+  TH1F * h_vbf0_pt   = addHistoToMap (histos, string ("vbf0_pt_")    + radice, 100, 0, 400) ;
+  TH1F * h_vbf0_phi  = addHistoToMap (histos, string ("vbf0_phi_")   + radice, 30, -3.14, 3.14) ;
+                                                                    
+  TH1F * h_vbf1_eta  = addHistoToMap (histos, string ("vbf1_eta_")   + radice, 40, -6, 6) ;
+  TH1F * h_vbf1_pt   = addHistoToMap (histos,  string ("vbf1_pt_")   + radice, 100, 0, 250) ;
+  TH1F * h_vbf1_phi  = addHistoToMap (histos, string ("vbf1_phi_")   + radice, 30, -3.14, 3.14) ;
+                                                                    
+  TH1F * h_mjj_vbf   = addHistoToMap (histos, string ("mjj_vbf_")    + radice, 70, 0, 4000) ;
+  TH1F * h_NJ        = addHistoToMap (histos, string ("NJ_")         + radice, 5, 0, 5) ;
     
   int ieve = 0 ;
   // loop over events
@@ -215,17 +218,25 @@ readSample (string sampleName, string radice, int maxevents = -1)
 
       // get the tag jets
       sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
+      h_NJ->Fill (finalJets.size ()) ;
+
+//      cout << "Njs = " << finalJets.size () << "\n" ;
+//      cout << "pts: " 
+//           << finalJets.at (0).Pt () 
+//           << "\t"
+//           << finalJets.at (1).Pt () 
+//           << "\n" ;
       
       h_higgs_eta->Fill (higgs.at (0).Eta ()) ;            
-      h_higgs_phi->Fill (higgs.at (0).Eta ()) ;            
+      h_higgs_phi->Fill (higgs.at (0).Phi ()) ;            
       h_higgs_pt-> Fill (higgs.at (0).Pt ()) ;        
 
       h_vbf0_eta->Fill (finalJets.at (0).Eta ()) ;            
-      h_vbf0_phi->Fill (finalJets.at (0).Eta ()) ;            
+      h_vbf0_phi->Fill (finalJets.at (0).Phi ()) ;            
       h_vbf0_pt-> Fill (finalJets.at (0).Pt ()) ;        
 
       h_vbf1_eta->Fill (finalJets.at (1).Eta ()) ;            
-      h_vbf1_phi->Fill (finalJets.at (1).Eta ()) ;            
+      h_vbf1_phi->Fill (finalJets.at (1).Phi ()) ;            
       h_vbf1_pt-> Fill (finalJets.at (1).Pt ()) ;        
 
       float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
@@ -247,11 +258,11 @@ int main (int argc, char **argv)
   int Ntot = 100000 ;
 //  std::ifstream ifs (argv[1]) ;
   map<string, TH1F *> hmap_V1 = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/VBF_H_V1.lhe", "V1", Ntot) ;
+    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V1.lhe", "V1", Ntot) ;
   map<string, TH1F *> hmap_V2 = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/VBF_H_V2.lhe", "V2", Ntot) ;
+    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2.lhe", "V2", Ntot) ;
   map<string, TH1F *> hmap_V2_noParallel = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/VBF_H_V2_noParallel.lhe", "V2_noParallel", Ntot) ;
+    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2_noParallel.lhe", "V2_noParallel", Ntot) ;
 
 
   TFile outfile ("testPowheg02.root", "recreate") ;
@@ -259,44 +270,71 @@ int main (int argc, char **argv)
   savemap (hmap_V2,  outfile,  1.) ; 
   savemap (hmap_V2_noParallel,  outfile,  1.) ; 
   
-  // Now we are done.
+  gStyle->SetStatStyle (0) ; 
+  gStyle->SetTitleStyle (0) ; 
+  gStyle->SetCanvasBorderSize (0) ; 
+  gStyle->SetFrameBorderSize (0) ; 
+  gStyle->SetLegendBorderSize (0) ; 
+  gStyle->SetStatBorderSize (0) ; 
+  gStyle->SetTitleBorderSize (0) ; 
+  gStyle->SetTitleYOffset (2) ;
+
+  TCanvas c1 ;
+  c1.SetLeftMargin (0.17) ; 
+  c1.SetTopMargin (0.1) ; 
+  
+  map<string, TH1F *>::iterator iMap_V2 = hmap_V2.begin () ;
+  map<string, TH1F *>::iterator iMap_V2_noParallel = hmap_V2_noParallel.begin () ;
+
+
+  // plotting
+  for (map<string, TH1F *>::iterator iMap_V1 = hmap_V1.begin () ;
+       iMap_V1 != hmap_V1.end () ;
+       ++iMap_V1)
+    {
+      iMap_V1->second->SetStats (0) ;
+      iMap_V2->second->SetStats (0) ;
+      iMap_V2_noParallel->second->SetStats (0) ;
+      
+      iMap_V1->second->SetTitle ("") ;
+      iMap_V2->second->SetTitle ("") ;
+      iMap_V2_noParallel->second->SetTitle ("") ;
+      
+      iMap_V1->second->SetLineWidth (2) ;
+      iMap_V2->second->SetLineWidth (2) ;
+      iMap_V2_noParallel->second->SetLineWidth (2) ;
+      
+      iMap_V1->second->SetLineColor (30) ;
+      iMap_V2->second->SetLineColor (9) ;
+      iMap_V2_noParallel->second->SetLineColor (14) ;
+      
+//      iMap_V2->second->SetLineStyle (2) ;
+//      iMap_V2_noParallel->second->SetLineStyle (3) ;
+
+      iMap_V1->second->SetFillColor (30) ;
+
+      TLegend leg (0.3, 0.9, 0.8, 1) ;
+      leg.SetNColumns (3) ;
+      leg.SetLineStyle (0) ;
+      leg.SetFillStyle (0) ;
+      leg.AddEntry (iMap_V1->second, "V1", "fl") ;
+      leg.AddEntry (iMap_V2->second, "V2", "fl") ;
+//      leg.AddEntry (iMap_V2_noParallel->second, "V2_np", "l") ;
+      
+      iMap_V1->second->GetXaxis ()->SetTitle (iMap_V1->first.c_str ()) ;        
+      iMap_V2->second->GetXaxis ()->SetTitle (iMap_V2->first.c_str ()) ;        
+      iMap_V2->second->Draw () ;           
+      iMap_V1->second->Draw ("same") ;   
+      iMap_V2->second->Draw ("same") ;           
+//      iMap_V2_noParallel->second->Draw ("same") ;
+      leg.Draw () ;
+      c1.Print ((iMap_V1->first + ".png").c_str (), "png") ;
+
+      ++iMap_V2 ;
+      ++iMap_V2_noParallel ;
+    }   
+  
   return 0 ;
 }
 
 
-/* 
-
-
-TFile *_file0 = TFile::Open("powhegTest.root")
-
-TCanvas c1 
-c1.SetLogy ()
-
-mjj_vbf_8TeV->SetLineColor (kBlue + 2)
-mjj_vbf_13TeV->SetLineWidth (2)
-mjj_vbf_13TeV->Draw ()
-mjj_vbf_8TeV->Draw ("same")
-cut_mjj_vbf_8TeV->SetLineColor (kBlue + 2)
-cut_mjj_vbf_13TeV->SetLineWidth (2)
-cut_mjj_vbf_8TeV->SetLineStyle (2)
-cut_mjj_vbf_13TeV->SetLineStyle (2)
-cut_mjj_vbf_13TeV->Draw ("same")
-cut_mjj_vbf_8TeV->Draw ("same")
-
-c1.Print ("ERC_XS.pdf", "pdf") 
-
-mjj_vbf_13TeV->Scale (100)
-mjj_vbf_8TeV->Scale (20)
-mjj_vbf_13TeV->Draw ()
-mjj_vbf_8TeV->Draw ("same")
-cut_mjj_vbf_13TeV->Scale (100)
-cut_mjj_vbf_8TeV->Scale (20)
-cut_mjj_vbf_13TeV->Draw ("same")
-cut_mjj_vbf_8TeV->Draw ("same")
-
-c1.Print ("ERC_XS_lumi.pdf", "pdf") 
-
-
-
-
-*/
