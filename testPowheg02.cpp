@@ -149,7 +149,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
   // loop over events
   while ( reader.readEvent () ) 
     {
-      if (ieve % 1000 == 0) std::cout << "event " << ieve << "\n" ;
+      if (ieve % 10000 == 0) std::cout << "event " << ieve << "\n" ;
       if (maxevents > 0 && ieve >= maxevents) break ;
       ++ieve;
   
@@ -325,6 +325,11 @@ int main (int argc, char **argv)
       iMap_V2->second->GetXaxis ()->SetTitle (iMap_V2->first.c_str ()) ;        
       iMap_V2->second->Draw () ;           
       iMap_V1->second->Draw ("same") ;   
+      iMap_V2->second->SetFillStyle (3001) ;
+      iMap_V2->second->SetFillColor (9) ;
+      iMap_V2->second->DrawCopy ("E2same") ;           
+      iMap_V2->second->SetFillStyle (0) ;
+      iMap_V2->second->SetFillColor (0) ;
       iMap_V2->second->Draw ("same") ;           
 //      iMap_V2_noParallel->second->Draw ("same") ;
       leg.Draw () ;
