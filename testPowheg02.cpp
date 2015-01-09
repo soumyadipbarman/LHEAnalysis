@@ -97,6 +97,7 @@ TH1F *
 addHistoToMap (map<string, TH1F *> & hmap, string name, int bin, float min, float max)
 {
   TH1F * dummy = new TH1F (name.c_str (), name.c_str (), bin, min, max) ;
+  dummy->Sumw2 () ;
   hmap[name] = dummy ;
   return dummy ;
 }
@@ -258,17 +259,14 @@ int main (int argc, char **argv)
   int Ntot = 100000 ;
 //  std::ifstream ifs (argv[1]) ;
   map<string, TH1F *> hmap_V1 = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V1.lhe", "V1", Ntot) ;
+    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V1.lhe", "V1", 100000) ;
   map<string, TH1F *> hmap_V2 = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2.lhe", "V2", Ntot) ;
-  map<string, TH1F *> hmap_V2_noParallel = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2_noParallel.lhe", "V2_noParallel", Ntot) ;
-
+//    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2.lhe", "V2", Ntot) ;
+    readSample ("/Users/govoni/data/powheg_test/VBF_H_V2_1M/VBF_H_V2.lhe", "V2", 1000000) ;
 
   TFile outfile ("testPowheg02.root", "recreate") ;
-  savemap (hmap_V1,  outfile,  1.) ; 
-  savemap (hmap_V2,  outfile,  1.) ; 
-  savemap (hmap_V2_noParallel,  outfile,  1.) ; 
+  savemap (hmap_V1,  outfile,  1./100000.) ; 
+  savemap (hmap_V2,  outfile,  1./1000000.) ; 
   
   gStyle->SetStatStyle (0) ; 
   gStyle->SetTitleStyle (0) ; 
@@ -284,8 +282,6 @@ int main (int argc, char **argv)
   c1.SetTopMargin (0.1) ; 
   
   map<string, TH1F *>::iterator iMap_V2 = hmap_V2.begin () ;
-  map<string, TH1F *>::iterator iMap_V2_noParallel = hmap_V2_noParallel.begin () ;
-
 
   // plotting
   for (map<string, TH1F *>::iterator iMap_V1 = hmap_V1.begin () ;
@@ -294,23 +290,16 @@ int main (int argc, char **argv)
     {
       iMap_V1->second->SetStats (0) ;
       iMap_V2->second->SetStats (0) ;
-      iMap_V2_noParallel->second->SetStats (0) ;
       
       iMap_V1->second->SetTitle ("") ;
       iMap_V2->second->SetTitle ("") ;
-      iMap_V2_noParallel->second->SetTitle ("") ;
       
       iMap_V1->second->SetLineWidth (2) ;
       iMap_V2->second->SetLineWidth (2) ;
-      iMap_V2_noParallel->second->SetLineWidth (2) ;
       
       iMap_V1->second->SetLineColor (30) ;
       iMap_V2->second->SetLineColor (9) ;
-      iMap_V2_noParallel->second->SetLineColor (14) ;
       
-//      iMap_V2->second->SetLineStyle (2) ;
-//      iMap_V2_noParallel->second->SetLineStyle (3) ;
-
       iMap_V1->second->SetFillColor (30) ;
 
       TLegend leg (0.3, 0.9, 0.8, 1) ;
@@ -319,24 +308,21 @@ int main (int argc, char **argv)
       leg.SetFillStyle (0) ;
       leg.AddEntry (iMap_V1->second, "V1", "fl") ;
       leg.AddEntry (iMap_V2->second, "V2", "fl") ;
-//      leg.AddEntry (iMap_V2_noParallel->second, "V2_np", "l") ;
       
       iMap_V1->second->GetXaxis ()->SetTitle (iMap_V1->first.c_str ()) ;        
       iMap_V2->second->GetXaxis ()->SetTitle (iMap_V2->first.c_str ()) ;        
       iMap_V2->second->Draw () ;           
-      iMap_V1->second->Draw ("same") ;   
+      iMap_V1->second->Draw ("histsame") ;   
       iMap_V2->second->SetFillStyle (3001) ;
       iMap_V2->second->SetFillColor (9) ;
       iMap_V2->second->DrawCopy ("E2same") ;           
       iMap_V2->second->SetFillStyle (0) ;
       iMap_V2->second->SetFillColor (0) ;
       iMap_V2->second->Draw ("same") ;           
-//      iMap_V2_noParallel->second->Draw ("same") ;
       leg.Draw () ;
       c1.Print ((iMap_V1->first + ".png").c_str (), "png") ;
 
       ++iMap_V2 ;
-      ++iMap_V2_noParallel ;
     }   
   
   return 0 ;
