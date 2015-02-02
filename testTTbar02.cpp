@@ -245,8 +245,10 @@ readSample (string sampleName, string radice, int maxevents = -1)
       ++btagged ;
 
       if (initialParticlesPDGId.size () != 2) exit (1) ; 
-      if (fabs (initialParticlesPDGId.at (0)) > 6) continue ;
-      if (fabs (initialParticlesPDGId.at (1)) > 6) continue ;
+
+      // the following remove events with guons as initial particles
+//      if (fabs (initialParticlesPDGId.at (0)) > 6) continue ;
+//      if (fabs (initialParticlesPDGId.at (1)) > 6) continue ;
       
       sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
       if (finalJets.at (0).Pt () < 20) continue ;
@@ -264,7 +266,10 @@ readSample (string sampleName, string radice, int maxevents = -1)
       if (fabs (finalLeptons.at (0).Eta ()) > 4) continue ;
       if (fabs (finalLeptons.at (1).Eta ()) > 4) continue ;
 
-      float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
+// this selection has to be performed on Bs to match the two cases of phantom and powheg,
+// since phantom is not yet matched to a PS
+//      float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
+      float mjj = (finalBs.at (0) + finalBs.at (1)).M () ;
       if (mjj < 300) continue ;
       if (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) < 2) continue ;
       float m4l = (finalNeutrinos.at (0) + finalNeutrinos.at (1) + finalLeptons.at (0) + finalLeptons.at (1)).M () ;
@@ -308,16 +313,25 @@ int main (int argc, char **argv)
 {
   gROOT->SetStyle ("Plain") ;
 
-  int N_PW = 500000 ;
+  int N_PW = 50000 ;
+  float XS_PW = 9.7322303413280036 ; /* pb */
   map<string, TH1F *> hmap_PW = 
     readSample ("/Users/govoni/data/TP/powheg/ttbar/uu/pwgevents.lhe", "PW", N_PW) ;
 
-  int N_PH = 50000 ;
+  int N_PH = 10000 ;
+  // sample with no external gluons
+//  float XS_PH = 0.0527135372782 ; /* pb */
+//  map<string, TH1F *> hmap_PH = 
+//    readSample ("/Users/govoni/data/TP/phantom/gen_TP_OS_QCD_OS_uvuv_126_UU_sample/total.lhe", "PH", N_PH) ;
+
+  // sample with also external gluons
+  float XS_PH = 0.35527859505022163 ; /* pb */
   map<string, TH1F *> hmap_PH = 
-    readSample ("/Users/govoni/data/TP/phantom/gen_TP_OS_QCD_OS_uvuv_126_UU_sample/total.lhe", "PH", N_PH) ;
+    readSample ("/Users/govoni/data/TP/phantom/gen_TP_OS_QCD_OS_uvuvgg_126_UU_sample/total.lhe", "PH", N_PH) ;
+
   TFile outfile ("testTTbar02.root", "recreate") ;
-  savemap (hmap_PW,  outfile,  9.7322303413280036 * 1000./N_PW) ;  /*result in fb */
-  savemap (hmap_PH,  outfile,  0.0527135372782 * 1000./N_PH) ;   /*result in fb */
+  savemap (hmap_PW,  outfile,  XS_PW * 1000./N_PW) ;  /*result in fb */
+  savemap (hmap_PH,  outfile,  XS_PH * 1000./N_PH) ;  /*result in fb */
 //  savemap (hmap_PW,  outfile,  1000./N_PW) ;  /*result in fb */
 //  savemap (hmap_PH,  outfile,  1000./N_PH) ;   /*result in fb */
   
@@ -364,7 +378,7 @@ int main (int argc, char **argv)
       
       iMap_PW->second->GetXaxis ()->SetTitle (iMap_PW->first.c_str ()) ;        
       iMap_PH->second->GetXaxis ()->SetTitle (iMap_PH->first.c_str ()) ;        
-      iMap_PH->second->Draw () ;           
+      iMap_PW->second->Draw () ;           
       iMap_PW->second->DrawCopy ("histsame") ;   
       iMap_PH->second->SetFillStyle (3001) ;
       iMap_PH->second->SetFillColor (9) ;
