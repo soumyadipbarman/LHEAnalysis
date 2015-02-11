@@ -131,20 +131,38 @@ readSample (string sampleName, string radice, int maxevents = -1)
   
   map<string, TH1F *> histos ;
 
-  TH1F * h_higgs_eta = addHistoToMap (histos, string ("higgs_eta_")  + radice, 40, -6, 6) ;
-  TH1F * h_higgs_pt  = addHistoToMap (histos, string ("higgs_pt_")   + radice, 100, 0, 500) ;
-  TH1F * h_higgs_phi = addHistoToMap (histos, string ("higgs_phi_")  + radice, 30, -3.14, 3.14) ;
+  TH1F * h_higgs_eta   = addHistoToMap (histos, string ("higgs_eta_")    + radice, 40, -6, 6) ;
+  TH1F * h_higgs_pt    = addHistoToMap (histos, string ("higgs_pt_")     + radice, 100, 0, 500) ;
+  TH1F * h_higgs_phi   = addHistoToMap (histos, string ("higgs_phi_")    + radice, 30, -3.14, 3.14) ;
+                                                                        
+  TH1F * h_gluon_eta   = addHistoToMap (histos, string ("gluon_eta_")    + radice, 40, -6, 6) ;
+  TH1F * h_gluon_pt    = addHistoToMap (histos, string ("gluon_pt_")     + radice, 100, 0, 500) ;
+  TH1F * h_gluon_phi   = addHistoToMap (histos, string ("gluon_phi_")    + radice, 30, -3.14, 3.14) ;
+                                                                        
+  TH1F * h_vbf0_eta    = addHistoToMap (histos, string ("vbf0_eta_")     + radice, 40, -6, 6) ;
+  TH1F * h_vbf0_pt     = addHistoToMap (histos, string ("vbf0_pt_")      + radice, 100, 0, 400) ;
+  TH1F * h_vbf0_phi    = addHistoToMap (histos, string ("vbf0_phi_")     + radice, 30, -3.14, 3.14) ;
+                                                                        
+  TH1F * h_vbf1_eta    = addHistoToMap (histos, string ("vbf1_eta_")     + radice, 40, -6, 6) ;
+  TH1F * h_vbf1_pt     = addHistoToMap (histos, string ("vbf1_pt_")      + radice, 100, 0, 250) ;
+  TH1F * h_vbf1_phi    = addHistoToMap (histos, string ("vbf1_phi_")     + radice, 30, -3.14, 3.14) ;
+                                                                        
+  TH1F * h_mjj_vbf     = addHistoToMap (histos, string ("mjj_vbf_")      + radice, 70, 0, 4000) ;
+  TH1F * h_deta_vbf    = addHistoToMap (histos, string ("deta_vbf_")     + radice, 70, 0, 10) ;
 
-  TH1F * h_vbf0_eta  = addHistoToMap (histos, string ("vbf0_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_vbf0_pt   = addHistoToMap (histos, string ("vbf0_pt_")    + radice, 100, 0, 400) ;
-  TH1F * h_vbf0_phi  = addHistoToMap (histos, string ("vbf0_phi_")   + radice, 30, -3.14, 3.14) ;
+  TH1F * h_quark0_eta  = addHistoToMap (histos, string ("quark0_eta_")   + radice, 40, -6, 6) ;
+  TH1F * h_quark0_pt   = addHistoToMap (histos, string ("quark0_pt_")    + radice, 100, 0, 400) ;
+  TH1F * h_quark0_phi  = addHistoToMap (histos, string ("quark0_phi_")   + radice, 30, -3.14, 3.14) ;
                                                                     
-  TH1F * h_vbf1_eta  = addHistoToMap (histos, string ("vbf1_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_vbf1_pt   = addHistoToMap (histos,  string ("vbf1_pt_")   + radice, 100, 0, 250) ;
-  TH1F * h_vbf1_phi  = addHistoToMap (histos, string ("vbf1_phi_")   + radice, 30, -3.14, 3.14) ;
+  TH1F * h_quark1_eta  = addHistoToMap (histos, string ("quark1_eta_")   + radice, 40, -6, 6) ;
+  TH1F * h_quark1_pt   = addHistoToMap (histos, string ("quark1_pt_")    + radice, 100, 0, 250) ;
+  TH1F * h_quark1_phi  = addHistoToMap (histos, string ("quark1_phi_")   + radice, 30, -3.14, 3.14) ;
                                                                     
-  TH1F * h_mjj_vbf   = addHistoToMap (histos, string ("mjj_vbf_")    + radice, 70, 0, 4000) ;
-  TH1F * h_NJ        = addHistoToMap (histos, string ("NJ_")         + radice, 5, 0, 5) ;
+  TH1F * h_mjj_quark   = addHistoToMap (histos, string ("mjj_quark_")    + radice, 70, 0, 4000) ;
+  TH1F * h_deta_quark  = addHistoToMap (histos, string ("deta_quark_")   + radice, 70, 0, 10) ;
+
+  TH1F * h_NJ          = addHistoToMap (histos, string ("NJ_")           + radice, 5, 0, 5) ;
+  TH1F * h_NG          = addHistoToMap (histos, string ("NG_")           + radice, 5, 0, 5) ;
     
   int ieve = 0 ;
   // loop over events
@@ -157,6 +175,8 @@ readSample (string sampleName, string radice, int maxevents = -1)
       vector<TLorentzVector> higgs ;      
       vector<TLorentzVector> finalJets ;      
       vector<TLorentzVector> initialQuarks ;      
+      vector<TLorentzVector> finalQuarks ;      
+      vector<TLorentzVector> finalGluon ;      
       
       //PG loop over particles in the event
       //PG and fill the variables of leptons and quarks
@@ -182,8 +202,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
           if (reader.hepeup.ISTUP.at (iPart) == 1)
             {
               // jets  
-              if (abs (reader.hepeup.IDUP.at (iPart)) < 7 ||  // quarks
-                  abs (reader.hepeup.IDUP.at (iPart)) == 21 ) // gluons
+              if (abs (reader.hepeup.IDUP.at (iPart)) < 7) // quarks
                 {
                   finalJets.push_back (TLorentzVector
                     (
@@ -192,7 +211,31 @@ readSample (string sampleName, string radice, int maxevents = -1)
                       reader.hepeup.PUP.at (iPart).at (2), //PG pz
                       reader.hepeup.PUP.at (iPart).at (3)  //PG E
                     )) ;
-                } // jets
+                  finalQuarks.push_back (TLorentzVector
+                    (
+                      reader.hepeup.PUP.at (iPart).at (0), //PG px
+                      reader.hepeup.PUP.at (iPart).at (1), //PG py
+                      reader.hepeup.PUP.at (iPart).at (2), //PG pz
+                      reader.hepeup.PUP.at (iPart).at (3)  //PG E
+                    )) ;
+                } // quarks
+              else if (abs (reader.hepeup.IDUP.at (iPart)) == 21 ) // gluons
+                {
+                  finalJets.push_back (TLorentzVector
+                    (
+                      reader.hepeup.PUP.at (iPart).at (0), //PG px
+                      reader.hepeup.PUP.at (iPart).at (1), //PG py
+                      reader.hepeup.PUP.at (iPart).at (2), //PG pz
+                      reader.hepeup.PUP.at (iPart).at (3)  //PG E
+                    )) ;
+                  finalGluon.push_back (TLorentzVector
+                    (
+                      reader.hepeup.PUP.at (iPart).at (0), //PG px
+                      reader.hepeup.PUP.at (iPart).at (1), //PG py
+                      reader.hepeup.PUP.at (iPart).at (2), //PG pz
+                      reader.hepeup.PUP.at (iPart).at (3)  //PG E
+                    )) ;
+                } // gluons
               else if (abs (reader.hepeup.IDUP.at (iPart)) == 25) // higgs
                 {
                   higgs.push_back (TLorentzVector
@@ -220,6 +263,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
       // get the tag jets
       sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
       h_NJ->Fill (finalJets.size ()) ;
+      sort (finalQuarks.rbegin (), finalQuarks.rend (), ptSort ()) ;
 
 //      cout << "Njs = " << finalJets.size () << "\n" ;
 //      cout << "pts: " 
@@ -232,6 +276,14 @@ readSample (string sampleName, string radice, int maxevents = -1)
       h_higgs_phi->Fill (higgs.at (0).Phi ()) ;            
       h_higgs_pt-> Fill (higgs.at (0).Pt ()) ;        
 
+      if (finalGluon.size () != 0)
+        {
+          h_gluon_eta->Fill (finalGluon.at (0).Eta ()) ;            
+          h_gluon_phi->Fill (finalGluon.at (0).Phi ()) ;            
+          h_gluon_pt-> Fill (finalGluon.at (0).Pt ()) ;        
+        }
+      h_NG->Fill (finalGluon.size ()) ;
+        
       h_vbf0_eta->Fill (finalJets.at (0).Eta ()) ;            
       h_vbf0_phi->Fill (finalJets.at (0).Phi ()) ;            
       h_vbf0_pt-> Fill (finalJets.at (0).Pt ()) ;        
@@ -242,6 +294,25 @@ readSample (string sampleName, string radice, int maxevents = -1)
 
       float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
       h_mjj_vbf->Fill (mjj) ;
+      float detajj = fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) ;
+      h_deta_vbf->Fill (detajj) ;
+
+      h_higgs_eta->Fill (higgs.at (0).Eta ()) ;            
+      h_higgs_phi->Fill (higgs.at (0).Phi ()) ;            
+      h_higgs_pt-> Fill (higgs.at (0).Pt ()) ;        
+
+      h_quark0_eta->Fill (finalQuarks.at (0).Eta ()) ;            
+      h_quark0_phi->Fill (finalQuarks.at (0).Phi ()) ;            
+      h_quark0_pt-> Fill (finalQuarks.at (0).Pt ()) ;        
+
+      h_quark1_eta->Fill (finalQuarks.at (1).Eta ()) ;            
+      h_quark1_phi->Fill (finalQuarks.at (1).Phi ()) ;            
+      h_quark1_pt-> Fill (finalQuarks.at (1).Pt ()) ;        
+
+      mjj = (finalQuarks.at (0) + finalQuarks.at (1)).M () ;
+      h_mjj_quark->Fill (mjj) ;
+      detajj = fabs (finalQuarks.at (0).Eta () - finalQuarks.at (1).Eta ()) ;
+      h_deta_quark->Fill (detajj) ;
 
     } // loop over events
     
@@ -256,17 +327,23 @@ int main (int argc, char **argv)
 {
   gROOT->SetStyle ("Plain") ;
 
-  int Ntot = 100000 ;
-//  std::ifstream ifs (argv[1]) ;
+//  int N_V1_tot = 1000000 ;
+  int N_V1_tot = 150000 ;
   map<string, TH1F *> hmap_V1 = 
-    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V1.lhe", "V1", 100000) ;
+//    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V1.lhe", "V1", 100000) ;
+//    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V1_1M.lhe", "V1", N_V1_tot) ;
+  readSample ("/Users/govoni/data/powheg_test/newRound/V1_fC.lhe", "V1", N_V1_tot) ;
+
+//  int N_V2_tot = 1000000 ;
+  int N_V2_tot = 154000 ;
   map<string, TH1F *> hmap_V2 = 
-//    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2.lhe", "V2", Ntot) ;
-    readSample ("/Users/govoni/data/powheg_test/VBF_H_V2_1M/VBF_H_V2.lhe", "V2", 1000000) ;
+//    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2.lhe", "V2", 100000) ;
+//    readSample ("/Users/govoni/data/powheg_test/POWHEG-BOX-V2_test_VBF_H/LHE/VBF_H_V2_1M.lhe", "V2", N_V2_tot) ;
+  readSample ("/Users/govoni/data/powheg_test/newRound/V2_fC.lhe", "V2", N_V2_tot) ;
 
   TFile outfile ("testPowheg02.root", "recreate") ;
-  savemap (hmap_V1,  outfile,  1./100000.) ; 
-  savemap (hmap_V2,  outfile,  1./1000000.) ; 
+  savemap (hmap_V1,  outfile,  1./N_V1_tot) ; 
+  savemap (hmap_V2,  outfile,  1./N_V2_tot) ; 
   
   gStyle->SetStatStyle (0) ; 
   gStyle->SetTitleStyle (0) ; 
@@ -282,6 +359,10 @@ int main (int argc, char **argv)
   c1.SetTopMargin (0.1) ; 
   
   map<string, TH1F *>::iterator iMap_V2 = hmap_V2.begin () ;
+
+
+  string outFolderName = "testPowheg02_plots/";
+  system (Form ("mkdir -p %s", outFolderName.c_str ())) ;
 
   // plotting
   for (map<string, TH1F *>::iterator iMap_V1 = hmap_V1.begin () ;
@@ -320,11 +401,14 @@ int main (int argc, char **argv)
       iMap_V2->second->SetFillColor (0) ;
       iMap_V2->second->Draw ("same") ;           
       leg.Draw () ;
-      c1.Print ((iMap_V1->first + ".png").c_str (), "png") ;
+      
+      
+      
+      c1.Print ((outFolderName + iMap_V1->first + ".png").c_str (), "png") ;
 
       ++iMap_V2 ;
     }   
-  
+
   return 0 ;
 }
 
