@@ -301,10 +301,6 @@ readSample (string sampleName, string radice, int maxevents = -1, TH1F * weight_
       float detajj = fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) ;
       h_deta_vbf->Fill (detajj, weight) ;
 
-      h_higgs_eta->Fill (higgs.at (0).Eta (), weight) ;            
-      h_higgs_phi->Fill (higgs.at (0).Phi (), weight) ;            
-      h_higgs_pt-> Fill (higgs.at (0).Pt (), weight) ;        
-
       h_quark0_eta->Fill (finalQuarks.at (0).Eta (), weight) ;            
       h_quark0_phi->Fill (finalQuarks.at (0).Phi (), weight) ;            
       h_quark0_pt-> Fill (finalQuarks.at (0).Pt (), weight) ;        
