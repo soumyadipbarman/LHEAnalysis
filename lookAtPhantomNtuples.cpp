@@ -61,6 +61,19 @@ public std::binary_function<TLorentzVector &, TLorentzVector &, bool>
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
 
 
+struct absEtaSort: 
+public std::binary_function<TLorentzVector &, TLorentzVector &, bool>
+{
+  bool operator() (TLorentzVector & x, TLorentzVector & y)
+    {
+      return fabs (x.Eta ()) < fabs (y.Eta ()) ;
+    }
+} ;
+
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
+
+
 int main (int argc, char **argv) 
 {
   gROOT->SetStyle ("Plain") ;
@@ -68,27 +81,29 @@ int main (int argc, char **argv)
   std::ifstream ifs ("/Users/govoni/data/TP/phantom/testNtuples.lhe") ;
   LHEF::Reader reader (ifs) ;
 
-  TH1F h_ptj1   ("ptj1  ", "ptj1  ", 100, 0., 500) ;
-  TH1F h_etaj1  ("etaj1 ", "etaj1 ", 50, -5., 5.) ;
-  TH1F h_phij1  ("phij1 ", "phij1 ", 50, -3.14, 3.14) ;
-  TH1F h_ptj2   ("ptj2  ", "ptj2  ", 100, 0., 500) ;
-  TH1F h_etaj2  ("etaj2 ", "etaj2 ", 50, -5., 5.) ;
-  TH1F h_phij2  ("phij2 ", "phij2 ", 50, -3.14, 3.14) ;
-  TH1F h_ptl1   ("ptl1  ", "ptl1  ", 100, 0., 500) ;
-  TH1F h_etal1  ("etal1 ", "etal1 ", 50, -5., 5.) ;
-  TH1F h_phil1  ("phil1 ", "phil1 ", 50, -3.14, 3.14) ;
-  TH1F h_ptl2   ("ptl2  ", "ptl2  ", 100, 0., 500) ;
-  TH1F h_etal2  ("etal2 ", "etal2 ", 50, -5., 5.) ;
-  TH1F h_phil2  ("phil2 ", "phil2 ", 50, -3.14, 3.14) ;
-  TH1F h_ptv1   ("ptv1  ", "ptv1  ", 100, 0., 500) ;
-  TH1F h_etav1  ("etav1 ", "etav1 ", 50, -5., 5.) ;
-  TH1F h_phiv1  ("phiv1 ", "phiv1 ", 50, -3.14, 3.14) ;
-  TH1F h_ptv2   ("ptv2  ", "ptv2  ", 100, 0., 500) ;
-  TH1F h_etav2  ("etav2 ", "etav2 ", 50, -5., 5.) ;
-  TH1F h_phiv2  ("phiv2 ", "phiv2 ", 50, -3.14, 3.14) ;
-  TH1F h_mjj    ("mjj   ", "mjj   ", 100, 0., 2000) ;
-  TH1F h_detajj ("detajj", "detajj", 50 , 0., 10.) ;
-  TH1F h_mll    ("mll   ", "mll   ", 100, 0., 2000) ;
+  TH1F h_ptj1   ("ptj1"    , " ptj1"  , 100, 0., 500) ;
+  TH1F h_etaj1  ("etaj1"   , " etaj1" , 50, -5., 5.) ;
+  TH1F h_phij1  ("phij1"   , " phij1" , 50, -3.14, 3.14) ;
+  TH1F h_ptj2   ("ptj2"    , " ptj2"  , 100, 0., 500) ;
+  TH1F h_etaj2  ("etaj2"   , " etaj2" , 50, -5., 5.) ;
+  TH1F h_phij2  ("phij2"   , " phij2" , 50, -3.14, 3.14) ;
+  TH1F h_ptl1   ("ptl1"    , " ptl1"  , 100, 0., 500) ;
+  TH1F h_etal1  ("etal1"   , " etal1" , 50, -5., 5.) ;
+  TH1F h_phil1  ("phil1"   , " phil1" , 50, -3.14, 3.14) ;
+  TH1F h_ptl2   ("ptl2"    , " ptl2"  , 100, 0., 500) ;
+  TH1F h_etal2  ("etal2"   , " etal2" , 50, -5., 5.) ;
+  TH1F h_phil2  ("phil2"   , " phil2" , 50, -3.14, 3.14) ;
+  TH1F h_ptv1   ("ptv1"    , " ptv1"  , 100, 0., 500) ;
+  TH1F h_etav1  ("etav1"   , " etav1" , 50, -5., 5.) ;
+  TH1F h_phiv1  ("phiv1"   , " phiv1" , 50, -3.14, 3.14) ;
+  TH1F h_ptv2   ("ptv2"    , " ptv2"  , 100, 0., 500) ;
+  TH1F h_etav2  ("etav2"   , " etav2" , 50, -5., 5.) ;
+  TH1F h_phiv2  ("phiv2"   , " phiv2" , 50, -3.14, 3.14) ;
+  TH1F h_mjj    ("mjj"     , " mjj"   , 100, 0., 2000) ;
+  TH1F h_detajj ("detajj"  , " detajj", 50 , 0., 10.) ;
+  TH1F h_mll    ("mll"     , " mll"   , 100, 0., 2000) ;
+  TH1F h_etaFWl ("h_etaFWl", " abs eta of most forward lepton", 25, 0., 5.) ;
+  TH1F h_etaCEl ("h_etaCEl", " abs eta of most central lepton", 25, 0., 5.) ;
 
   int ieve = 0 ;
   int maxevents = -1 ;
@@ -197,6 +212,11 @@ int main (int argc, char **argv)
       h_detajj.Fill (fabs (finalQuarks.at (1).Eta () - finalQuarks.at (0).Eta ())) ;
       float mll = (leptons.at (0) + leptons.at (1)).M () ;
       h_mll   .Fill (mll) ;
+
+      sort (leptons.rbegin (), leptons.rend (), absEtaSort ()) ;
+      h_etaFWl.Fill (fabs (leptons.at (0).Eta ())) ;
+      h_etaCEl.Fill (fabs (leptons.at (1).Eta ())) ;
+
     } // loop over events
 
   cout << "RUN OVER " << ieve << " EVENTS\n" ;
@@ -223,6 +243,9 @@ int main (int argc, char **argv)
   h_mjj.Write () ;
   h_detajj.Write () ;
   h_mll.Write () ;
+  h_etaFWl.Write () ;
+  h_etaCEl.Write () ;
+  
   outfile.Close () ;
   
   return 0 ;
