@@ -1,3 +1,10 @@
+/*
+  c++ -o testWZ01 `root-config --glibs --cflags` `lhapdf-config --cppflags  --ldflags` \
+     -lm testWZ01.cpp
+*/
+
+
+
 #include "LHEF.h"
 #include "TROOT.h"
 #include "TH1.h"
@@ -18,12 +25,11 @@
 #include <iostream>
 #include <algorithm>
 
-/*
-  c++ -o testWZ01 `root-config --glibs --cflags` \
-     -lm testWZ01.cpp
-*/
+//#include "Math/Vector3D.h"
+//#include "Math/Vector4D.h"
+//using namespace ROOT::Math ;
 
-
+#include "LHAPDF/LHAPDF.h"
 using namespace std ;
 
 
@@ -123,7 +129,7 @@ savemap (map<string, TH1F *> & hmap, TFile & outfile, float scale)
 
 
 map<string, TH1F *>
-readSample (string sampleName, string radice, int maxevents = -1)
+readSample (string sampleName, string radice, float referenceScale = 0., int maxevents = -1)
 {
   cout << "reading " << sampleName << endl ;
   std::ifstream ifs (sampleName.c_str ()) ;
@@ -160,6 +166,9 @@ readSample (string sampleName, string radice, int maxevents = -1)
                                                                     
   TH1F * h_NJ          = addHistoToMap (histos, string ("NJ_")           + radice, 5, 0, 5) ;
   TH1F * h_NG          = addHistoToMap (histos, string ("NG_")           + radice, 5, 0, 5) ;
+
+  TH1F * h_scale       = addHistoToMap (histos, string ("scale_")        + radice, 100, 0., 500.) ;
+  TH1F * h_weight      = addHistoToMap (histos, string ("weight_")       + radice, 100, 0., 10.) ;
     
   int ieve = 0 ;
   // loop over events
@@ -176,6 +185,10 @@ readSample (string sampleName, string radice, int maxevents = -1)
       vector<TLorentzVector> leptons ;      
       vector<TLorentzVector> neutrinos ;      
       
+      double x[2] = {0., 0.} ;
+      int flavour[2] = {0, 0} ;
+
+      int iquark = 0 ;
       //PG loop over particles in the event
       //PG and fill the variables of leptons and quarks
       for (int iPart = 0 ; iPart < reader.hepeup.IDUP.size (); ++iPart)
@@ -194,7 +207,9 @@ readSample (string sampleName, string radice, int maxevents = -1)
           //PG incoming particle          
           if (reader.hepeup.ISTUP.at (iPart) == -1)
             {
-              initialQuarks.push_back (particle) ;
+               x[iquark] = particle.P () / 7000. ;
+               flavour[iquark++] = reader.hepeup.IDUP.at (iPart) ;
+               initialQuarks.push_back (particle) ;
             } //PG incoming particle          
 
           //PG outgoing particles          
@@ -234,6 +249,35 @@ readSample (string sampleName, string radice, int maxevents = -1)
             } //PG outgoing particles
         } //PG loop over particles in the event
 
+      double weight = 1. ;
+      float scale = reader.hepeup.SCALUP ;
+      if (referenceScale != 0 )
+        weight = LHAPDF::xfx (x[0], referenceScale, flavour[0]) * LHAPDF::xfx (x[1], referenceScale, flavour[1]) /
+                 (LHAPDF::xfx (x[0], scale, flavour[0]) * LHAPDF::xfx (x[1], scale, flavour[1])) ;
+
+      h_weight->Fill (weight) ;
+      h_scale->Fill (scale) ;
+
+      if (isnan (weight))
+        {
+          cout << "WARNING weight is not a number, setting to 1." << endl ;
+          cout << "\t x0: " << x[0] << endl ; 
+          cout << "\t x1: " << x[1] << endl ; 
+          cout << "\t num, p0: " << LHAPDF::xfx (x[0], referenceScale, flavour[0]) << endl ; 
+          cout << "\t num, p1: " << LHAPDF::xfx (x[1], referenceScale, flavour[1]) << endl ; 
+          cout << "\t den, p0: " << LHAPDF::xfx (x[0], scale, flavour[0]) << endl ; 
+          cout << "\t den, p1: " << LHAPDF::xfx (x[1], scale, flavour[1]) << endl ; 
+          weight = 1. ;
+        } 
+      
+      if (isinf (weight))
+        {
+          cout << "WARNING weight is infinite, setting to 1." << endl ;
+          cout << "\t num: " << (LHAPDF::xfx (x[0], referenceScale, flavour[0]) * LHAPDF::xfx (x[1], referenceScale, flavour[1])) << endl ;
+          cout << "\t den: " << (LHAPDF::xfx (x[0], scale, flavour[0]) * LHAPDF::xfx (x[1], scale, flavour[1])) << endl ;
+          weight = 1. ;
+        } 
+      
       sort (leptons.rbegin (), leptons.rend (), ptSort ()) ;
       sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
 
@@ -251,35 +295,35 @@ readSample (string sampleName, string radice, int maxevents = -1)
       if (mjj < 300) continue ; 
 
       // get the tag jets
-      h_NJ->Fill (finalJets.size ()) ;
-      h_NG->Fill (finalGluons.size ()) ;
+      h_NJ->Fill (finalJets.size (), weight) ;
+      h_NG->Fill (finalGluons.size (), weight) ;
 
-      h_vbf0_eta->Fill (finalJets.at (0).Eta ()) ;            
-      h_vbf0_phi->Fill (finalJets.at (0).Phi ()) ;            
-      h_vbf0_pt-> Fill (finalJets.at (0).Pt ()) ;        
+      h_vbf0_eta->Fill (finalJets.at (0).Eta (), weight) ;            
+      h_vbf0_phi->Fill (finalJets.at (0).Phi (), weight) ;            
+      h_vbf0_pt-> Fill (finalJets.at (0).Pt (), weight) ;        
 
-      h_vbf1_eta->Fill (finalJets.at (1).Eta ()) ;            
-      h_vbf1_phi->Fill (finalJets.at (1).Phi ()) ;            
-      h_vbf1_pt-> Fill (finalJets.at (1).Pt ()) ;        
+      h_vbf1_eta->Fill (finalJets.at (1).Eta (), weight) ;            
+      h_vbf1_phi->Fill (finalJets.at (1).Phi (), weight) ;            
+      h_vbf1_pt-> Fill (finalJets.at (1).Pt (), weight) ;        
 
-      h_mjj_vbf->Fill (mjj) ;
-      h_deta_vbf->Fill (detajj) ;
+      h_mjj_vbf->Fill (mjj, weight) ;
+      h_deta_vbf->Fill (detajj, weight) ;
 
-      h_lep0_eta->Fill (leptons.at (0).Eta ()) ;            
-      h_lep0_phi->Fill (leptons.at (0).Phi ()) ;            
-      h_lep0_pt-> Fill (leptons.at (0).Pt ()) ;        
+      h_lep0_eta->Fill (leptons.at (0).Eta (), weight) ;            
+      h_lep0_phi->Fill (leptons.at (0).Phi (), weight) ;            
+      h_lep0_pt-> Fill (leptons.at (0).Pt (), weight) ;        
 
-      h_lep1_eta->Fill (leptons.at (1).Eta ()) ;            
-      h_lep1_phi->Fill (leptons.at (1).Phi ()) ;            
-      h_lep1_pt-> Fill (leptons.at (1).Pt ()) ;        
+      h_lep1_eta->Fill (leptons.at (1).Eta (), weight) ;            
+      h_lep1_phi->Fill (leptons.at (1).Phi (), weight) ;            
+      h_lep1_pt-> Fill (leptons.at (1).Pt (), weight) ;        
 
-      h_lep2_eta->Fill (leptons.at (2).Eta ()) ;            
-      h_lep2_phi->Fill (leptons.at (2).Phi ()) ;            
-      h_lep2_pt-> Fill (leptons.at (2).Pt ()) ;        
+      h_lep2_eta->Fill (leptons.at (2).Eta (), weight) ;            
+      h_lep2_phi->Fill (leptons.at (2).Phi (), weight) ;            
+      h_lep2_pt-> Fill (leptons.at (2).Pt (), weight) ;        
 
-      h_met_eta->Fill (neutrinos.at (0).Eta ()) ;            
-      h_met_phi->Fill (neutrinos.at (0).Phi ()) ;            
-      h_met_pt-> Fill (neutrinos.at (0).Pt ()) ;        
+      h_met_eta->Fill (neutrinos.at (0).Eta (), weight) ;            
+      h_met_phi->Fill (neutrinos.at (0).Phi (), weight) ;            
+      h_met_pt-> Fill (neutrinos.at (0).Pt (), weight) ;        
 
     } // loop over events
     
@@ -292,20 +336,35 @@ readSample (string sampleName, string radice, int maxevents = -1)
 
 int main (int argc, char **argv) 
 {
+  const int SUBSET = 0 ;
+  const string NAME = "cteq6ll" ; //"cteq6l1"
+
+  LHAPDF::initPDFSet (NAME, LHAPDF::LHPDF, SUBSET) ;
+  const int NUMBER = LHAPDF::numberPDF () ;
+
+  LHAPDF::initPDF (0) ;
+
   gROOT->SetStyle ("Plain") ;
 
+//  float commonScale = 125. ;
+  float commonScale = 140. ;
+
 //  int N_PH_tot = 480000 ;
-  int N_PH_tot = 40000 ;
+  int N_PH_tot = 80000 ;
   float PH_xs = 32.58 ; // fb
   map<string, TH1F *> hmap_PH = 
-  readSample ("/Users/govoni/data/TP/WZ/Phantom_QCD/total.lhe", "PH", N_PH_tot) ;
+  readSample ("/Users/govoni/data/TP/WZ/Phantom_QCD/total.lhe", "PH", commonScale, N_PH_tot) ;
 
 //  int N_MG_tot = 400000 ;
-  int N_MG_tot = 40000 ;
+  int N_MG_tot = 80000 ;
   float MG_xs = 287.59 ; // fb
   map<string, TH1F *> hmap_MG = 
-  readSample ("/Users/govoni/data/TP/WZ/Madgraph_QCD/total.lhe", "MG", N_MG_tot) ;
+  readSample ("/Users/govoni/data/TP/WZ/Madgraph_QCD/total.lhe", "MG", commonScale, N_MG_tot) ;
 
+  // compare shapes only
+//  PH_xs = 1. ;
+//  MG_xs = 1. ; 
+    
   TFile outfile ("testWZ01.root", "recreate") ;
   savemap (hmap_PH,  outfile,  PH_xs / N_PH_tot) ; 
   savemap (hmap_MG,  outfile,  MG_xs / N_MG_tot) ; 
@@ -323,13 +382,12 @@ int main (int argc, char **argv)
   c1.SetLeftMargin (0.17) ; 
   c1.SetTopMargin (0.1) ; 
   
-  map<string, TH1F *>::iterator iMap_MG = hmap_MG.begin () ;
-
 
   string outFolderName = "testWZ01_plots/";
   system (Form ("mkdir -p %s", outFolderName.c_str ())) ;
 
   // plotting
+  map<string, TH1F *>::iterator iMap_MG = hmap_MG.begin () ;
   for (map<string, TH1F *>::iterator iMap_PH = hmap_PH.begin () ;
        iMap_PH != hmap_PH.end () ;
        ++iMap_PH)
@@ -366,8 +424,6 @@ int main (int argc, char **argv)
       iMap_MG->second->SetFillColor (0) ;
       iMap_MG->second->Draw ("same") ;           
       leg.Draw () ;
-      
-      
       
       c1.Print ((outFolderName + iMap_PH->first + ".png").c_str (), "png") ;
 
