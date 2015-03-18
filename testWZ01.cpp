@@ -129,7 +129,7 @@ savemap (map<string, TH1F *> & hmap, TFile & outfile, float scale)
 
 
 map<string, TH1F *>
-readSample (string sampleName, string radice, float referenceScale = 0., int maxevents = -1)
+readSample (string sampleName, string radice, LHAPDF::PDF * pdf, float referenceScale = 0., int maxevents = -1)
 {
   cout << "reading " << sampleName << endl ;
   std::ifstream ifs (sampleName.c_str ()) ;
@@ -169,7 +169,7 @@ readSample (string sampleName, string radice, float referenceScale = 0., int max
 
   TH1F * h_scale       = addHistoToMap (histos, string ("scale_")        + radice, 100, 0., 500.) ;
   TH1F * h_weight      = addHistoToMap (histos, string ("weight_")       + radice, 100, 0., 10.) ;
-    
+ 
   int ieve = 0 ;
   // loop over events
   while ( reader.readEvent () ) 
@@ -249,34 +249,41 @@ readSample (string sampleName, string radice, float referenceScale = 0., int max
             } //PG outgoing particles
         } //PG loop over particles in the event
 
+      // dynamic scale according to phantom recipe
+      if (referenceScale < 0)
+        {
+          referenceScale = leptons.at (0).Pt () * leptons.at (0).Pt () ;
+          referenceScale += leptons.at (1).Pt () * leptons.at (1).Pt () ;
+          referenceScale += leptons.at (2).Pt () * leptons.at (2).Pt () ;
+          referenceScale += neutrinos.at (0).Pt () * neutrinos.at (0).Pt () ;
+          referenceScale += finalJets.at (1).Pt () * finalJets.at (1).Pt () ;
+          referenceScale += finalJets.at (0).Pt () * finalJets.at (0).Pt () ;
+          referenceScale /= 6. ;
+          referenceScale = sqrt (referenceScale) ;
+          referenceScale += 80. ;
+        }
+
       double weight = 1. ;
       float scale = reader.hepeup.SCALUP ;
       if (referenceScale != 0 )
-        weight = LHAPDF::xfx (x[0], referenceScale, flavour[0]) * LHAPDF::xfx (x[1], referenceScale, flavour[1]) /
-                 (LHAPDF::xfx (x[0], scale, flavour[0]) * LHAPDF::xfx (x[1], scale, flavour[1])) ;
-
-      h_weight->Fill (weight) ;
-      h_scale->Fill (scale) ;
+        weight = pdf->xfxQ (flavour[0], x[0], referenceScale) * pdf->xfxQ (flavour[1], x[1], referenceScale) /
+                 (pdf->xfxQ (flavour[0], x[0], scale) * pdf->xfxQ (flavour[1], x[1], scale)) ;
 
       if (isnan (weight))
         {
           cout << "WARNING weight is not a number, setting to 1." << endl ;
-          cout << "\t x0: " << x[0] << endl ; 
-          cout << "\t x1: " << x[1] << endl ; 
-          cout << "\t num, p0: " << LHAPDF::xfx (x[0], referenceScale, flavour[0]) << endl ; 
-          cout << "\t num, p1: " << LHAPDF::xfx (x[1], referenceScale, flavour[1]) << endl ; 
-          cout << "\t den, p0: " << LHAPDF::xfx (x[0], scale, flavour[0]) << endl ; 
-          cout << "\t den, p1: " << LHAPDF::xfx (x[1], scale, flavour[1]) << endl ; 
           weight = 1. ;
         } 
       
       if (isinf (weight))
         {
           cout << "WARNING weight is infinite, setting to 1." << endl ;
-          cout << "\t num: " << (LHAPDF::xfx (x[0], referenceScale, flavour[0]) * LHAPDF::xfx (x[1], referenceScale, flavour[1])) << endl ;
-          cout << "\t den: " << (LHAPDF::xfx (x[0], scale, flavour[0]) * LHAPDF::xfx (x[1], scale, flavour[1])) << endl ;
           weight = 1. ;
         } 
+
+      h_weight->Fill (weight) ;
+      h_scale->Fill (scale) ;
+
       
       sort (leptons.rbegin (), leptons.rend (), ptSort ()) ;
       sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
@@ -291,6 +298,8 @@ readSample (string sampleName, string radice, float referenceScale = 0., int max
 
       if (finalJets.at (0).Pt () < 20) continue ;
       if (finalJets.at (1).Pt () < 20) continue ;
+
+//      if (finalGluons.size () == 1) continue ;
       
       if (mjj < 300) continue ; 
 
@@ -337,29 +346,27 @@ readSample (string sampleName, string radice, float referenceScale = 0., int max
 int main (int argc, char **argv) 
 {
   const int SUBSET = 0 ;
-  const string NAME = "cteq6ll" ; //"cteq6l1"
+  const string NAME = "cteq6l1" ; //"cteq6l1"
 
-  LHAPDF::initPDFSet (NAME, LHAPDF::LHPDF, SUBSET) ;
-  const int NUMBER = LHAPDF::numberPDF () ;
-
-  LHAPDF::initPDF (0) ;
-
+  LHAPDF::PDF * pdf = LHAPDF::mkPDF (NAME, 0) ;
+    
   gROOT->SetStyle ("Plain") ;
 
 //  float commonScale = 125. ;
-  float commonScale = 140. ;
+//  float commonScale = 0. ; // each one with its own scale
+  float commonScale = -1. ; // dynamic scale of phantom
 
 //  int N_PH_tot = 480000 ;
   int N_PH_tot = 80000 ;
   float PH_xs = 32.58 ; // fb
   map<string, TH1F *> hmap_PH = 
-  readSample ("/Users/govoni/data/TP/WZ/Phantom_QCD/total.lhe", "PH", commonScale, N_PH_tot) ;
+  readSample ("/Users/govoni/data/TP/WZ/Phantom_QCD/total.lhe", "PH", pdf, commonScale, N_PH_tot) ;
 
 //  int N_MG_tot = 400000 ;
   int N_MG_tot = 80000 ;
   float MG_xs = 287.59 ; // fb
   map<string, TH1F *> hmap_MG = 
-  readSample ("/Users/govoni/data/TP/WZ/Madgraph_QCD/total.lhe", "MG", commonScale, N_MG_tot) ;
+  readSample ("/Users/govoni/data/TP/WZ/Madgraph_QCD/total.lhe", "MG", pdf, commonScale, N_MG_tot) ;
 
   // compare shapes only
 //  PH_xs = 1. ;
