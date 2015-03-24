@@ -149,6 +149,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
   
   map<string, TH1F *> histos ;
 
+  TH1F * h_higgs_M     = addHistoToMap (histos, string ("higgs_M_")      + radice, 1000, 124.995, 125.005) ;
   TH1F * h_higgs_eta   = addHistoToMap (histos, string ("higgs_eta_")    + radice, 40, -6, 6) ;
   TH1F * h_higgs_phi   = addHistoToMap (histos, string ("higgs_phi_")    + radice, 40, -3.14, 3.14) ;
   TH1F * h_higgs_pt    = addHistoToMap (histos, string ("higgs_pt_")     + radice, 40, 0, 500) ;
@@ -221,9 +222,11 @@ readSample (string sampleName, string radice, int maxevents = -1)
       h_NJ->Fill (finalJets.size ()) ;
       h_NG->Fill (finalGluons.size ()) ;
       h_NH->Fill (higgs.size ()) ;
+      if (finalJets.size () == 0) continue ;
       h_higgs_eta->Fill (higgs.at (0).Eta ()) ;            
       h_higgs_phi->Fill (higgs.at (0).Phi ()) ;            
-      h_higgs_pt->Fill (higgs.at (0).Pt ()) ;            
+      h_higgs_pt->Fill (higgs.at (0).Pt ()) ;
+      h_higgs_M->Fill (higgs.at (0).M ()) ;
 
 
     } // loop over events
