@@ -1,3 +1,8 @@
+/*
+  c++ -o testTTbar01 `root-config --glibs --cflags` \
+     -lm testTTbar01.cpp
+*/
+
 #include "LHEF.h"
 #include "TROOT.h"
 #include "TH1.h"
@@ -17,11 +22,6 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-
-/*
-  c++ -o testTTbar01 `root-config --glibs --cflags` \
-     -lm testTTbar01.cpp
-*/
 
 
 using namespace std ;
@@ -256,8 +256,8 @@ int main (int argc, char **argv)
 
   int N_PW = 60000 ;
   map<string, TH1F *> hmap_PW = 
-    readSample ("/Users/govoni/data/TP/powheg/ttbar/total.lhe", "PW", N_PW) ;
-
+    readSample ("/Users/govoni/data/TP/powheg/test/total.lhe", "PW", N_PW) ;
+    
   TFile outfile ("testTTbar01.root", "recreate") ;
   savemap (hmap_PW,  outfile,  242.5 * 1000./N_PW) ; 
   
