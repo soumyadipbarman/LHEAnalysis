@@ -149,7 +149,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
   
   map<string, TH1F *> histos ;
 
-  TH1F * h_higgs_M     = addHistoToMap (histos, string ("higgs_M_")      + radice, 1000, 124.995, 125.005) ;
+  TH1F * h_higgs_M     = addHistoToMap (histos, string ("higgs_M_")      + radice, 1000, 124.99995, 125.00005) ;
   TH1F * h_higgs_eta   = addHistoToMap (histos, string ("higgs_eta_")    + radice, 40, -6, 6) ;
   TH1F * h_higgs_phi   = addHistoToMap (histos, string ("higgs_phi_")    + radice, 40, -3.14, 3.14) ;
   TH1F * h_higgs_pt    = addHistoToMap (histos, string ("higgs_pt_")     + radice, 40, 0, 500) ;
