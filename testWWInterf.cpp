@@ -389,7 +389,7 @@ int main (int argc, char **argv)
       iMap_ALL->second->GetXaxis ()->SetTitle (iMap_EWK->first.c_str ()) ; 
       dummy->GetXaxis ()->SetTitle (iMap_EWK->first.c_str ()) ;        
 
-      iMap_ALL->second->Draw ("histo") ;           
+      iMap_ALL->second->Draw ("histo E") ;           
       dummy->Draw ("histo same") ;      
       iMap_ALL->second->Draw ("histo same") ;           
       iMap_EWK->second->Draw ("histo same") ;           
