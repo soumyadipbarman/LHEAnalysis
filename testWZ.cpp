@@ -1,3 +1,9 @@
+/*
+  c++ -o testWZ `root-config --glibs --cflags` `lhapdf-config --cppflags  --ldflags` \
+     -lm testWZ.cpp
+*/
+
+
 #include "LHEF.h"
 #include "TROOT.h"
 #include "TH1.h"
@@ -18,13 +24,11 @@
 #include <iostream>
 #include <algorithm>
 
-/*
-  c++ -o testWZ `root-config --glibs --cflags` \
-     -lm testWZ.cpp
-*/
+#include "LHAPDF/LHAPDF.h"
 
 
 using namespace std ;
+using namespace LHAPDF ;
 
 
 double 
@@ -60,8 +64,6 @@ struct etaSort: public std::binary_function<TLorentzVector &, TLorentzVector &, 
       return x.Eta () < y.Eta () ;
     }
 } ;
-
-
 
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -123,7 +125,8 @@ savemap (map<string, TH1F *> & hmap, TFile & outfile, float scale)
 
 
 map<string, TH1F *>
-readSample (string sampleName, string radice, int maxevents = -1)
+readSample (string sampleName, string radice, int maxevents = -1, 
+            bool doPdfReweight = false)
 {
   cout << "reading " << sampleName << endl ;
   std::ifstream ifs (sampleName.c_str ()) ;
@@ -131,42 +134,58 @@ readSample (string sampleName, string radice, int maxevents = -1)
   
   map<string, TH1F *> histos ;
 
+  TH1F * h_pdfWeight       = addHistoToMap (histos, string ("pdfWeight_")        + radice, 200, 0., 2.) ;
+
   TH1F * h_initPart        = addHistoToMap (histos, string ("initPart_")         + radice, 135, -22.5, 22.5) ;
   TH1F * h_finalJetsPDGId  = addHistoToMap (histos, string ("finalJetsPDGId_")   + radice, 135, -22.5, 22.5) ;
 
-  TH1F * h_lep0_eta  = addHistoToMap (histos, string ("lep0_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_lep0_pt   = addHistoToMap (histos, string ("lep0_pt_")    + radice, 100, 0, 400) ;
-  TH1F * h_lep0_phi  = addHistoToMap (histos, string ("lep0_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_lep1_eta  = addHistoToMap (histos, string ("lep1_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_lep1_pt   = addHistoToMap (histos, string ("lep1_pt_")    + radice, 100, 0, 400) ;
-  TH1F * h_lep1_phi  = addHistoToMap (histos, string ("lep1_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_lep2_eta  = addHistoToMap (histos, string ("lep2_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_lep2_pt   = addHistoToMap (histos, string ("lep2_pt_")    + radice, 100, 0, 400) ;
-  TH1F * h_lep2_phi  = addHistoToMap (histos, string ("lep2_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_met_eta   = addHistoToMap (histos, string ("met_eta_")    + radice, 40, -6, 6) ;
-  TH1F * h_met_pt    = addHistoToMap (histos, string ("met_pt_")     + radice, 100, 0, 400) ;
-  TH1F * h_met_phi   = addHistoToMap (histos, string ("met_phi_")    + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_vbf0_eta  = addHistoToMap (histos, string ("vbf0_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_vbf0_pt   = addHistoToMap (histos, string ("vbf0_pt_")    + radice, 100, 0, 400) ;
-  TH1F * h_vbf0_phi  = addHistoToMap (histos, string ("vbf0_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_vbf1_eta  = addHistoToMap (histos, string ("vbf1_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_vbf1_pt   = addHistoToMap (histos, string ("vbf1_pt_")    + radice, 100, 0, 250) ;
-  TH1F * h_vbf1_phi  = addHistoToMap (histos, string ("vbf1_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_mjj_vbf   = addHistoToMap (histos, string ("mjj_vbf_")    + radice, 25, 0, 2500) ;
-  TH1F * h_NJ        = addHistoToMap (histos, string ("NJ_")         + radice, 5, 0, 5) ;
+  TH1F * h_lep0_eta        = addHistoToMap (histos, string ("lep0_eta_")         + radice, 40, -6, 6) ;
+  TH1F * h_lep0_pt         = addHistoToMap (histos, string ("lep0_pt_")          + radice, 100, 0, 400) ;
+  TH1F * h_lep0_phi        = addHistoToMap (histos, string ("lep0_phi_")         + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_lep1_eta        = addHistoToMap (histos, string ("lep1_eta_")         + radice, 40, -6, 6) ;
+  TH1F * h_lep1_pt         = addHistoToMap (histos, string ("lep1_pt_")          + radice, 100, 0, 400) ;
+  TH1F * h_lep1_phi        = addHistoToMap (histos, string ("lep1_phi_")         + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_lep2_eta        = addHistoToMap (histos, string ("lep2_eta_")         + radice, 40, -6, 6) ;
+  TH1F * h_lep2_pt         = addHistoToMap (histos, string ("lep2_pt_")          + radice, 100, 0, 400) ;
+  TH1F * h_lep2_phi        = addHistoToMap (histos, string ("lep2_phi_")         + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_met_eta         = addHistoToMap (histos, string ("met_eta_")          + radice, 40, -6, 6) ;
+  TH1F * h_met_pt          = addHistoToMap (histos, string ("met_pt_")           + radice, 100, 0, 400) ;
+  TH1F * h_met_phi         = addHistoToMap (histos, string ("met_phi_")          + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_vbf0_eta        = addHistoToMap (histos, string ("vbf0_eta_")         + radice, 40, -6, 6) ;
+  TH1F * h_vbf0_pt         = addHistoToMap (histos, string ("vbf0_pt_")          + radice, 100, 0, 400) ;
+  TH1F * h_vbf0_phi        = addHistoToMap (histos, string ("vbf0_phi_")         + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_vbf1_eta        = addHistoToMap (histos, string ("vbf1_eta_")         + radice, 40, -6, 6) ;
+  TH1F * h_vbf1_pt         = addHistoToMap (histos, string ("vbf1_pt_")          + radice, 100, 0, 250) ;
+  TH1F * h_vbf1_phi        = addHistoToMap (histos, string ("vbf1_phi_")         + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_bjet0_eta       = addHistoToMap (histos, string ("bjet0_eta_")        + radice, 40, -6, 6) ;
+  TH1F * h_bjet0_pt        = addHistoToMap (histos, string ("bjet0_pt_")         + radice, 100, 0, 400) ;
+  TH1F * h_bjet0_phi       = addHistoToMap (histos, string ("bjet0_phi_")        + radice, 30, -3.14, 3.14) ;
+                                                                                 
+  TH1F * h_Ljet0_eta       = addHistoToMap (histos, string ("Ljet0_eta_")        + radice, 40, -6, 6) ;
+  TH1F * h_Ljet0_pt        = addHistoToMap (histos, string ("Ljet0_pt_")         + radice, 100, 0, 400) ;
+  TH1F * h_Ljet0_phi       = addHistoToMap (histos, string ("Ljet0_phi_")        + radice, 30, -3.14, 3.14) ;
 
-  TH1F * h_m4l       = addHistoToMap (histos, string ("m4l_")        + radice, 35, 0, 2275) ;
+  TH1F * h_detajj_vbf      = addHistoToMap (histos, string ("detajj_vbf_")       + radice, 25, 0, 10) ;
+  TH1F * h_mjj_vbf         = addHistoToMap (histos, string ("mjj_vbf_")          + radice, 25, 0, 2500) ;
+  TH1F * h_NJ              = addHistoToMap (histos, string ("NJ_")               + radice, 5, 0, 5) ;
+                                                                                 
+  TH1F * h_m4l             = addHistoToMap (histos, string ("m4l_")              + radice, 35, 0, 2275) ;
+  TH1F * h_mtop            = addHistoToMap (histos, string ("mtop_")             + radice, 400, 0, 4000) ;
     
   int ieve = 0 ;
   int btagged = 0 ;
   int selected = 0 ;
   // loop over events
+
+  double x[2] = {0., 0.} ;
+  int flavour[2] = {0, 0} ;
+
   while ( reader.readEvent () ) 
     {
       if (ieve % 10000 == 0) std::cout << "event " << ieve << "\n" ;
@@ -179,7 +198,8 @@ readSample (string sampleName, string radice, int maxevents = -1)
       vector<TLorentzVector> finalNeutrinos ;      
       vector<TLorentzVector> initialQuarks ;      
       vector<TLorentzVector> finalJets ;      
-      vector<TLorentzVector> finalBs ;      
+      vector<TLorentzVector> finalBjets ;      
+      vector<TLorentzVector> finalLjets ;      
       
       int leptonsIDproduct = 1 ;
 
@@ -202,6 +222,9 @@ readSample (string sampleName, string radice, int maxevents = -1)
                   reader.hepeup.PUP.at (iPart).at (2), //PG pz
                   reader.hepeup.PUP.at (iPart).at (3) //PG E
                 )) ;
+              x[iPart] = initialQuarks.back ().P () / 7000. ;
+              flavour[iPart] = reader.hepeup.IDUP.at (iPart) ;
+
             } //PG incoming particle          
 
           //PG outgoing particles          
@@ -219,11 +242,9 @@ readSample (string sampleName, string radice, int maxevents = -1)
                       reader.hepeup.PUP.at (iPart).at (2), //PG pz
                       reader.hepeup.PUP.at (iPart).at (3)  //PG E
                     )) ;
-
-
                   if (abs (reader.hepeup.IDUP.at (iPart)) == 5)  // b's
                     {
-                      finalBs.push_back (TLorentzVector
+                      finalBjets.push_back (TLorentzVector
                         (
                           reader.hepeup.PUP.at (iPart).at (0), //PG px
                           reader.hepeup.PUP.at (iPart).at (1), //PG py
@@ -231,6 +252,17 @@ readSample (string sampleName, string radice, int maxevents = -1)
                           reader.hepeup.PUP.at (iPart).at (3)  //PG E
                         )) ;
                     } // b's
+                  else
+                    {
+                      finalLjets.push_back (TLorentzVector
+                        (
+                          reader.hepeup.PUP.at (iPart).at (0), //PG px
+                          reader.hepeup.PUP.at (iPart).at (1), //PG py
+                          reader.hepeup.PUP.at (iPart).at (2), //PG pz
+                          reader.hepeup.PUP.at (iPart).at (3)  //PG E
+                        )) ;
+                    
+                    }  
                 } // jets
               else if (abs (reader.hepeup.IDUP.at (iPart)) == 11 ||
                        abs (reader.hepeup.IDUP.at (iPart)) == 13 ) // charged leptons
@@ -309,46 +341,84 @@ readSample (string sampleName, string radice, int maxevents = -1)
       float m4l = (finalNeutrinos.at (0) + finalLeptons.at (0) + finalLeptons.at (1) + finalLeptons.at (2)).M () ;
       if (m4l < 130) continue ;
 
+      bool isSingleTop = false ;
+      if (finalBjets.size () > 0)
+        {
+           TLorentzVector tl_top = finalLeptons.at (0) + finalNeutrinos.at (0) + finalBjets.at (0) ;
+           h_mtop->Fill (tl_top.M ()) ;
+           if (tl_top.M () < (173 + 12) && tl_top.M () > (173 - 12)) isSingleTop = true ;
+        }
+      if (isSingleTop) continue ;     
+
       ++selected ;      
-      h_NJ->Fill (finalJets.size ()) ;
-//      cout << "Njs = " << finalJets.size () << "\n" ;
-//      cout << "pts: " 
-//           << finalJets.at (0).Pt () 
-//           << "\t"
-//           << finalJets.at (1).Pt () 
-//           << "\n" ;
+      //PG end of selections
+
+      float weight = 1. ;
+      if (doPdfReweight)
+        {
+          //PG the scale:
+          float scale = reader.hepeup.SCALUP ;
+    
+          //PG determine the scale according to the phantom recipe
+          double phantomScale = 80.385 * 80.385 + 
+              (finalJets.at (0).Pt () * finalJets.at (0).Pt () +
+               finalJets.at (1).Pt () * finalJets.at (1).Pt () +
+               finalLeptons.at (0).Pt () * finalLeptons.at (0).Pt () +
+               finalLeptons.at (1).Pt () * finalLeptons.at (1).Pt () +
+               finalLeptons.at (1).Pt () * finalLeptons.at (1).Pt () +
+               finalLeptons.at (2).Pt () * finalLeptons.at (2).Pt () +
+               finalNeutrinos.at (0).Pt () * finalNeutrinos.at (0).Pt ()) / 6. ;
+          phantomScale = sqrt (phantomScale) ;
+    
+          //PG calculate the weight to be applied to the event
+          weight = LHAPDF::xfx (x[0], phantomScale, flavour[0]) * LHAPDF::xfx (x[1], phantomScale, flavour[1]) /
+                   (LHAPDF::xfx (x[0], scale, flavour[0]) * LHAPDF::xfx (x[1], scale, flavour[1])) ;
+//          cout << weight << endl ;
+        }
+      h_pdfWeight->Fill (weight) ;
+      
+      h_NJ->Fill (finalJets.size (), weight) ;
 
       for (int i = 0 ; i < initialParticlesPDGId.size () ; ++i)
-        h_initPart->Fill (initialParticlesPDGId.at (i)) ;
+        h_initPart->Fill (initialParticlesPDGId.at (i), weight) ;
       for (int i = 0 ; i < finalJetsPDGId.size () ; ++i)
-        h_finalJetsPDGId->Fill (finalJetsPDGId.at (i)) ;
+        h_finalJetsPDGId->Fill (finalJetsPDGId.at (i), weight) ;
       
-      h_vbf0_eta->Fill (finalJets.at (0).Eta ()) ;            
-      h_vbf0_phi->Fill (finalJets.at (0).Phi ()) ;            
-      h_vbf0_pt-> Fill (finalJets.at (0).Pt ()) ;        
+      h_vbf0_eta->Fill (finalJets.at (0).Eta (), weight) ;            
+      h_vbf0_phi->Fill (finalJets.at (0).Phi (), weight) ;            
+      h_vbf0_pt-> Fill (finalJets.at (0).Pt (), weight) ;        
 
-      h_vbf1_eta->Fill (finalJets.at (1).Eta ()) ;            
-      h_vbf1_phi->Fill (finalJets.at (1).Phi ()) ;            
-      h_vbf1_pt-> Fill (finalJets.at (1).Pt ()) ;        
+      h_vbf1_eta->Fill (finalJets.at (1).Eta (), weight) ;            
+      h_vbf1_phi->Fill (finalJets.at (1).Phi (), weight) ;            
+      h_vbf1_pt-> Fill (finalJets.at (1).Pt (), weight) ;        
 
-      h_lep0_eta->Fill (finalLeptons.at (0).Eta ()) ;            
-      h_lep0_phi->Fill (finalLeptons.at (0).Phi ()) ;            
-      h_lep0_pt-> Fill (finalLeptons.at (0).Pt ()) ;        
+      h_bjet0_eta->Fill (finalBjets.at (0).Eta (), weight) ;            
+      h_bjet0_phi->Fill (finalBjets.at (0).Phi (), weight) ;            
+      h_bjet0_pt-> Fill (finalBjets.at (0).Pt (), weight) ;        
 
-      h_lep1_eta->Fill (finalLeptons.at (1).Eta ()) ;            
-      h_lep1_phi->Fill (finalLeptons.at (1).Phi ()) ;            
-      h_lep1_pt-> Fill (finalLeptons.at (1).Pt ()) ;        
+      h_Ljet0_eta->Fill (finalLjets.at (0).Eta (), weight) ;            
+      h_Ljet0_phi->Fill (finalLjets.at (0).Phi (), weight) ;            
+      h_Ljet0_pt-> Fill (finalLjets.at (0).Pt (), weight) ;        
 
-      h_lep2_eta->Fill (finalLeptons.at (2).Eta ()) ;            
-      h_lep2_phi->Fill (finalLeptons.at (2).Phi ()) ;            
-      h_lep2_pt-> Fill (finalLeptons.at (2).Pt ()) ;        
+      h_lep0_eta->Fill (finalLeptons.at (0).Eta (), weight) ;            
+      h_lep0_phi->Fill (finalLeptons.at (0).Phi (), weight) ;            
+      h_lep0_pt-> Fill (finalLeptons.at (0).Pt (), weight) ;        
 
-      h_met_eta->Fill (finalNeutrinos.at (0).Eta ()) ;            
-      h_met_phi->Fill (finalNeutrinos.at (0).Phi ()) ;            
-      h_met_pt-> Fill (finalNeutrinos.at (0).Pt ()) ;        
+      h_lep1_eta->Fill (finalLeptons.at (1).Eta (), weight) ;            
+      h_lep1_phi->Fill (finalLeptons.at (1).Phi (), weight) ;            
+      h_lep1_pt-> Fill (finalLeptons.at (1).Pt (), weight) ;        
 
-      h_mjj_vbf->Fill (mjj) ;
-      h_m4l->Fill (m4l) ;
+      h_lep2_eta->Fill (finalLeptons.at (2).Eta (), weight) ;            
+      h_lep2_phi->Fill (finalLeptons.at (2).Phi (), weight) ;            
+      h_lep2_pt-> Fill (finalLeptons.at (2).Pt (), weight) ;        
+
+      h_met_eta->Fill (finalNeutrinos.at (0).Eta (), weight) ;            
+      h_met_phi->Fill (finalNeutrinos.at (0).Phi (), weight) ;            
+      h_met_pt-> Fill (finalNeutrinos.at (0).Pt (), weight) ;        
+
+      h_detajj_vbf->Fill (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ())) ;
+      h_mjj_vbf->Fill (mjj, weight) ;
+      h_m4l->Fill (m4l, weight) ;
       
     } // loop over events
   cout << "total eff  : " << selected * 1./ieve << endl ;
@@ -363,15 +433,29 @@ int main (int argc, char **argv)
 {
   gROOT->SetStyle ("Plain") ;
 
+  bool doPdfReweight = false ;
+  if (argc > 1) doPdfReweight = true ;
+
+  const int SUBSET = 0;
+  const string NAME = "cteq6ll"; //"cteq6l1"
+
+  LHAPDF::initPDFSet(NAME, LHAPDF::LHPDF, SUBSET);
+  const int NUMBER = LHAPDF::numberPDF();
+
+  LHAPDF::initPDF (0) ;
+
   int N_MG = 50000 ;
-  float XS_MG = 6.45 ; /* fb */
+//  float XS_MG = 6.45 ; /* fb */
+  float XS_MG = 382.31 * 0.2 * 0.067 ; /* fb */ 
   map<string, TH1F *> hmap_MG = 
-    readSample ("/Users/govoni/data/TP/compareEWK/WZ/madgraph.lhe", "MG", N_MG) ;
+    readSample ("/Users/govoni/data/TP/compareEWK/WZ/unweighted_events_decayed_maxjetflavor5_bcuts.lhe", "MG", N_MG, doPdfReweight) ;
+//    readSample ("/Users/govoni/data/TP/compareEWK/WZ/unweighted_events_decayed_maxjetflavor5.lhe", "MG", N_MG, doPdfReweight) ;
+//    readSample ("/Users/govoni/data/TP/compareEWK/WZ/madgraph.lhe", "MG", N_MG, doPdfReweight) ;
 
   int N_PH = 79938 ;
   float XS_PH = 7.854 ; /* fb */
   map<string, TH1F *> hmap_PH = 
-    readSample ("/Users/govoni/data/TP/compareEWK/WZ/phantom.lhe", "PH", N_PH) ;
+    readSample ("/Users/govoni/data/TP/compareEWK/WZ/phantom.lhe", "PH", N_PH, doPdfReweight) ;
 
   TFile outfile ("testWZ.root", "recreate") ;
   savemap (hmap_MG,  outfile,  XS_MG * 1./N_MG) ;  /*result in fb */
