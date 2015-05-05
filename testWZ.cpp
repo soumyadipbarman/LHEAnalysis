@@ -176,7 +176,8 @@ readSample (string sampleName, string radice, int maxevents = -1,
   TH1F * h_NJ              = addHistoToMap (histos, string ("NJ_")               + radice, 5, 0, 5) ;
                                                                                  
   TH1F * h_m4l             = addHistoToMap (histos, string ("m4l_")              + radice, 35, 0, 2275) ;
-  TH1F * h_mtop            = addHistoToMap (histos, string ("mtop_")             + radice, 400, 0, 4000) ;
+  TH1F * h_mtop            = addHistoToMap (histos, string ("mtop_")             + radice, 100, 0, 2000) ;
+  TH1F * h_mtopSel         = addHistoToMap (histos, string ("mtopSel_")          + radice, 100, 0, 2000) ;
     
   int ieve = 0 ;
   int btagged = 0 ;
@@ -195,6 +196,7 @@ readSample (string sampleName, string radice, int maxevents = -1,
       vector<int> initialParticlesPDGId ;      
       vector<int> finalJetsPDGId ;      
       vector<TLorentzVector> finalLeptons ;      
+      vector<int> isLeptonFromZ ;      
       vector<TLorentzVector> finalNeutrinos ;      
       vector<TLorentzVector> initialQuarks ;      
       vector<TLorentzVector> finalJets ;      
@@ -207,21 +209,18 @@ readSample (string sampleName, string radice, int maxevents = -1,
       //PG and fill the variables of leptons and quarks
       for (int iPart = 0 ; iPart < reader.hepeup.IDUP.size (); ++iPart)
         {
-//          std::cout << "\t part type [" << iPart << "] " << reader.hepeup.IDUP.at (iPart)
-//                    << "\t status " << reader.hepeup.ISTUP.at (iPart)
-//                    << "\n" ;
-
           //PG incoming particle          
+          TLorentzVector dummy (
+              reader.hepeup.PUP.at (iPart).at (0), //PG px
+              reader.hepeup.PUP.at (iPart).at (1), //PG py
+              reader.hepeup.PUP.at (iPart).at (2), //PG pz
+              reader.hepeup.PUP.at (iPart).at (3) //PG E
+            ) ;
+
           if (reader.hepeup.ISTUP.at (iPart) == -1)
             {
               initialParticlesPDGId.push_back (reader.hepeup.IDUP.at (iPart)) ;
-              initialQuarks.push_back (TLorentzVector
-                (
-                  reader.hepeup.PUP.at (iPart).at (0), //PG px
-                  reader.hepeup.PUP.at (iPart).at (1), //PG py
-                  reader.hepeup.PUP.at (iPart).at (2), //PG pz
-                  reader.hepeup.PUP.at (iPart).at (3) //PG E
-                )) ;
+              initialQuarks.push_back (dummy) ;
               x[iPart] = initialQuarks.back ().P () / 7000. ;
               flavour[iPart] = reader.hepeup.IDUP.at (iPart) ;
 
@@ -235,57 +234,32 @@ readSample (string sampleName, string radice, int maxevents = -1,
                   abs (reader.hepeup.IDUP.at (iPart)) == 21 ) // gluons
                 {
                   finalJetsPDGId.push_back (reader.hepeup.IDUP.at (iPart)) ;
-                  finalJets.push_back (TLorentzVector
-                    (
-                      reader.hepeup.PUP.at (iPart).at (0), //PG px
-                      reader.hepeup.PUP.at (iPart).at (1), //PG py
-                      reader.hepeup.PUP.at (iPart).at (2), //PG pz
-                      reader.hepeup.PUP.at (iPart).at (3)  //PG E
-                    )) ;
+                  finalJets.push_back (dummy) ;
                   if (abs (reader.hepeup.IDUP.at (iPart)) == 5)  // b's
                     {
-                      finalBjets.push_back (TLorentzVector
-                        (
-                          reader.hepeup.PUP.at (iPart).at (0), //PG px
-                          reader.hepeup.PUP.at (iPart).at (1), //PG py
-                          reader.hepeup.PUP.at (iPart).at (2), //PG pz
-                          reader.hepeup.PUP.at (iPart).at (3)  //PG E
-                        )) ;
+                      finalBjets.push_back (dummy) ;
                     } // b's
                   else
                     {
-                      finalLjets.push_back (TLorentzVector
-                        (
-                          reader.hepeup.PUP.at (iPart).at (0), //PG px
-                          reader.hepeup.PUP.at (iPart).at (1), //PG py
-                          reader.hepeup.PUP.at (iPart).at (2), //PG pz
-                          reader.hepeup.PUP.at (iPart).at (3)  //PG E
-                        )) ;
-                    
+                      finalLjets.push_back (dummy) ;
                     }  
                 } // jets
               else if (abs (reader.hepeup.IDUP.at (iPart)) == 11 ||
                        abs (reader.hepeup.IDUP.at (iPart)) == 13 ) // charged leptons
                 {
                   leptonsIDproduct *= reader.hepeup.IDUP.at (iPart) ;
-                  finalLeptons.push_back (TLorentzVector
-                    (
-                      reader.hepeup.PUP.at (iPart).at (0), //PG px
-                      reader.hepeup.PUP.at (iPart).at (1), //PG py
-                      reader.hepeup.PUP.at (iPart).at (2), //PG pz
-                      reader.hepeup.PUP.at (iPart).at (3)  //PG E
-                    )) ;
+                  finalLeptons.push_back (dummy) ;
+                  isLeptonFromZ.push_back (0) ;
+                  int mother1 = reader.hepeup.MOTHUP.at (iPart).first ;
+                  if (fabs (reader.hepeup.IDUP.at (mother1)) == 23)
+                    {
+                      isLeptonFromZ.back () = 1 ;
+                    }
                 } //PG charged leptons
               else if (abs (reader.hepeup.IDUP.at (iPart)) == 12 ||
                        abs (reader.hepeup.IDUP.at (iPart)) == 14 ) // neutrinos
                 {
-                  finalNeutrinos.push_back (TLorentzVector
-                    (
-                      reader.hepeup.PUP.at (iPart).at (0), //PG px
-                      reader.hepeup.PUP.at (iPart).at (1), //PG py
-                      reader.hepeup.PUP.at (iPart).at (2), //PG pz
-                      reader.hepeup.PUP.at (iPart).at (3)  //PG E
-                    )) ;
+                  finalNeutrinos.push_back (dummy) ;
                 } // neutrinos
 
             } //PG outgoing particles
@@ -342,16 +316,27 @@ readSample (string sampleName, string radice, int maxevents = -1,
       if (m4l < 130) continue ;
 
       bool isSingleTop = false ;
+      float mTop = 0. ;
       if (finalBjets.size () > 0)
         {
-           TLorentzVector tl_top = finalLeptons.at (0) + finalNeutrinos.at (0) + finalBjets.at (0) ;
+           int iLep = 0 ;
+           for (int iLep = 0 ; iLep < 3 ; ++iLep)
+             {
+               if (isLeptonFromZ.at (iLep) == 0) break ;
+             }
+           TLorentzVector tl_top = finalLeptons.at (iLep) + finalNeutrinos.at (0) + finalBjets.at (0) ;
+           mTop = tl_top.M () ;
            h_mtop->Fill (tl_top.M ()) ;
-           if (tl_top.M () < (173 + 12) && tl_top.M () > (173 - 12)) isSingleTop = true ;
+           if (tl_top.M () < (173 + 12) && tl_top.M () > (173 - 12)) 
+             {
+               isSingleTop = true ;
+             }   
         }
       if (isSingleTop) continue ;     
 
       ++selected ;      
       //PG end of selections
+
 
       float weight = 1. ;
       if (doPdfReweight)
@@ -376,7 +361,8 @@ readSample (string sampleName, string radice, int maxevents = -1,
 //          cout << weight << endl ;
         }
       h_pdfWeight->Fill (weight) ;
-      
+
+      h_mtopSel->Fill (mTop, weight) ;
       h_NJ->Fill (finalJets.size (), weight) ;
 
       for (int i = 0 ; i < initialParticlesPDGId.size () ; ++i)
@@ -444,13 +430,10 @@ int main (int argc, char **argv)
 
   LHAPDF::initPDF (0) ;
 
-  int N_MG = 50000 ;
-//  float XS_MG = 6.45 ; /* fb */
-  float XS_MG = 382.31 * 0.2 * 0.067 ; /* fb */ 
+  int N_MG = 10000 ;
+  float XS_MG = 660.19 * 0.2 * 0.067 ; /* fb */ 
   map<string, TH1F *> hmap_MG = 
-    readSample ("/Users/govoni/data/TP/compareEWK/WZ/unweighted_events_decayed_maxjetflavor5_bcuts.lhe", "MG", N_MG, doPdfReweight) ;
-//    readSample ("/Users/govoni/data/TP/compareEWK/WZ/unweighted_events_decayed_maxjetflavor5.lhe", "MG", N_MG, doPdfReweight) ;
-//    readSample ("/Users/govoni/data/TP/compareEWK/WZ/madgraph.lhe", "MG", N_MG, doPdfReweight) ;
+    readSample ("/Users/govoni/data/TP/compareEWK/WZ/madgraph_new.lhe", "MG", N_MG, doPdfReweight) ;
 
   int N_PH = 79938 ;
   float XS_PH = 7.854 ; /* fb */
@@ -515,11 +498,11 @@ int main (int argc, char **argv)
       iMap_PH->second->Draw ("same") ;           
       leg.Draw () ;
       c1.Print (("WZ_" + iMap_MG->first + ".png").c_str (), "png") ;
-      iMap_PH->second->DrawNormalized ("E2") ;           
-      iMap_MG->second->DrawNormalized ("histsame") ;   
-      iMap_PH->second->DrawNormalized ("E2same") ;           
-      leg.Draw () ;
-      c1.Print (("WZ_" + iMap_MG->first + "_norm.png").c_str (), "png") ;
+//      iMap_PH->second->DrawNormalized ("E2") ;           
+//      iMap_MG->second->DrawNormalized ("histsame") ;   
+//      iMap_PH->second->DrawNormalized ("E2same") ;           
+//      leg.Draw () ;
+//      c1.Print (("WZ_" + iMap_MG->first + "_norm.png").c_str (), "png") ;
 
       ++iMap_PH ;
     }   
