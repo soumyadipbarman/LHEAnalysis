@@ -131,20 +131,34 @@ readSample (string sampleName, string radice, int maxevents = -1)
   
   map<string, TH1F *> histos ;
 
-  TH1F * h_initPart  = addHistoToMap (histos, string ("initPart_")   + radice, 45, -22.5, 22.5) ;
-
-  TH1F * h_vbf0_eta  = addHistoToMap (histos, string ("vbf0_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_vbf0_pt   = addHistoToMap (histos, string ("vbf0_pt_")    + radice, 100, 0, 400) ;
-  TH1F * h_vbf0_phi  = addHistoToMap (histos, string ("vbf0_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_vbf1_eta  = addHistoToMap (histos, string ("vbf1_eta_")   + radice, 40, -6, 6) ;
-  TH1F * h_vbf1_pt   = addHistoToMap (histos,  string ("vbf1_pt_")   + radice, 100, 0, 250) ;
-  TH1F * h_vbf1_phi  = addHistoToMap (histos, string ("vbf1_phi_")   + radice, 30, -3.14, 3.14) ;
-                                                                    
-  TH1F * h_mjj_vbf   = addHistoToMap (histos, string ("mjj_vbf_")    + radice, 25, 0, 2500) ;
-  TH1F * h_NJ        = addHistoToMap (histos, string ("NJ_")         + radice, 5, 0, 5) ;
-
-  TH1F * h_m4l       = addHistoToMap (histos, string ("m4l_")        + radice, 35, 0, 2275) ;
+  TH1F * h_initPart   = addHistoToMap (histos, string ("initPart_")   + radice, 25, -22.5, 22.5) ;
+                      
+  TH1F * h_vbf0_eta   = addHistoToMap (histos, string ("vbf0_eta_")   + radice, 20, -6, 6) ;
+  TH1F * h_vbf0_pt    = addHistoToMap (histos, string ("vbf0_pt_")    + radice, 20, 0, 400) ;
+  TH1F * h_vbf0_phi   = addHistoToMap (histos, string ("vbf0_phi_")   + radice, 15, -3.14, 3.14) ;
+                                                                     
+  TH1F * h_vbf1_eta   = addHistoToMap (histos, string ("vbf1_eta_")   + radice, 20, -6, 6) ;
+  TH1F * h_vbf1_pt    = addHistoToMap (histos,  string ("vbf1_pt_")   + radice, 12, 0, 250) ;
+  TH1F * h_vbf1_phi   = addHistoToMap (histos, string ("vbf1_phi_")   + radice, 15, -3.14, 3.14) ;
+                      
+  TH1F * h_lep0_eta   = addHistoToMap (histos, string ("lep0_eta_")   + radice, 20, -6, 6) ;
+  TH1F * h_lep0_pt    = addHistoToMap (histos, string ("lep0_pt_")    + radice, 10, 0, 400) ;
+  TH1F * h_lep0_phi   = addHistoToMap (histos, string ("lep0_phi_")   + radice, 15, -3.14, 3.14) ;                                                                    
+                      
+  TH1F * h_lep1_eta   = addHistoToMap (histos, string ("lep1_eta_")   + radice, 20, -6, 6) ;
+  TH1F * h_lep1_pt    = addHistoToMap (histos, string ("lep1_pt_")    + radice, 12, 0, 250) ;
+  TH1F * h_lep1_phi   = addHistoToMap (histos, string ("lep1_phi_")   + radice, 15, -3.14, 3.14) ;
+                                                                     
+  TH1F * h_met_eta    = addHistoToMap (histos, string ("met_eta_")    + radice, 20, -6, 6) ;
+  TH1F * h_met_pt     = addHistoToMap (histos, string ("met_pt_")     + radice, 12, 0, 250) ;
+  TH1F * h_met_phi    = addHistoToMap (histos, string ("met_phi_")    + radice, 15, -3.14, 3.14) ;
+                                                                     
+  TH1F * h_dphijj_vbf = addHistoToMap (histos, string ("dphijj_vbf_") + radice, 8, 0, 3.14) ;
+  TH1F * h_mjj_vbf    = addHistoToMap (histos, string ("mjj_vbf_")    + radice, 12, 0, 2500) ;
+  TH1F * h_NJ         = addHistoToMap (histos, string ("NJ_")         + radice, 5, 0, 5) ;
+                      
+  TH1F * h_mll        = addHistoToMap (histos, string ("mll_")        + radice, 12, 0, 2500) ;
+  TH1F * h_m4l        = addHistoToMap (histos, string ("m4l_")        + radice, 20, 0, 2275) ;
     
   int ieve = 0 ;
   int btagged = 0 ;
@@ -200,8 +214,6 @@ readSample (string sampleName, string radice, int maxevents = -1)
                       reader.hepeup.PUP.at (iPart).at (2), //PG pz
                       reader.hepeup.PUP.at (iPart).at (3)  //PG E
                     )) ;
-
-
                   if (abs (reader.hepeup.IDUP.at (iPart)) == 5)  // b's
                     {
                       finalBs.push_back (TLorentzVector
@@ -269,11 +281,46 @@ readSample (string sampleName, string radice, int maxevents = -1)
       if (fabs (finalLeptons.at (0).Eta ()) > 4) continue ;
       if (fabs (finalLeptons.at (1).Eta ()) > 4) continue ;
 
-      float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
+      TLorentzVector tl_diJet = finalJets.at (0) + finalJets.at (1) ;
+      float mjj = tl_diJet.M () ;
       if (mjj < 300) continue ;
       if (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) < 2) continue ;
       float m4l = (finalNeutrinos.at (0) + finalLeptons.at (0) + finalLeptons.at (1) + finalNeutrinos.at (0)).M () ;
       if (m4l < 130) continue ;
+
+      TLorentzVector tl_met = finalNeutrinos.at (0) + finalNeutrinos.at (1) ;
+      h_met_eta->Fill (tl_met.Eta ()) ;            
+      h_met_phi->Fill (tl_met.Phi ()) ;            
+      h_met_pt-> Fill (tl_met.Pt ()) ;        
+
+      TLorentzVector tl_diLepton = finalLeptons.at (0) + finalLeptons.at (1) ;
+      float mll = tl_diLepton.M () ;
+ 
+      // end of pre-selections
+      
+      if (mjj < 625) continue ;
+      if (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) < 2.5) continue ;
+      if (mll < 40) continue ;
+      if (mll > 85 && mll < 95) continue ;
+      if (tl_met.Pt () > 40) continue ;
+      if (fabs (finalLeptons.at (0).Eta () - finalLeptons.at (1).Eta ()) > 2) continue ;
+      float etamin = min (finalJets.at (0).Eta (), finalJets.at (1).Eta ()) ;
+      float etamax = max (finalJets.at (0).Eta (), finalJets.at (1).Eta ()) ;
+      for (int i = 0 ; i < finalLeptons.size () ; ++i)
+        {
+          if (finalLeptons.at (i).Eta () > etamax) continue ;
+          if (finalLeptons.at (i).Eta () < etamin) continue ;
+        }      
+      if (tl_diLepton.DeltaR (tl_diJet) > 6) continue ;
+
+      // end of analysis-like selection
+
+      int countBs = 0 ;
+      for (int i = 0 ; i < finalBs.size () ; ++i) 
+        if (fabs (finalBs.at (i).Eta ()) < 2.5) ++countBs ;
+
+      if (countBs > 0) continue ;
+      // end of selections
 
       ++selected ;      
       h_NJ->Fill (finalJets.size ()) ;
@@ -295,9 +342,18 @@ readSample (string sampleName, string radice, int maxevents = -1)
       h_vbf1_phi->Fill (finalJets.at (1).Phi ()) ;            
       h_vbf1_pt-> Fill (finalJets.at (1).Pt ()) ;        
 
+      h_lep0_eta->Fill (finalLeptons.at (0).Eta ()) ;            
+      h_lep0_phi->Fill (finalLeptons.at (0).Phi ()) ;            
+      h_lep0_pt-> Fill (finalLeptons.at (0).Pt ()) ;        
+
+      h_lep1_eta->Fill (finalLeptons.at (1).Eta ()) ;            
+      h_lep1_phi->Fill (finalLeptons.at (1).Phi ()) ;            
+      h_lep1_pt-> Fill (finalLeptons.at (1).Pt ()) ;        
+
       h_mjj_vbf->Fill (mjj) ;
+      h_mll->Fill (mll) ;
       h_m4l->Fill (m4l) ;
-      
+      h_dphijj_vbf->Fill (deltaPhi (finalJets.at (0).Phi (), finalJets.at (1).Phi ())) ;
     } // loop over events
   cout << "total eff  : " << selected * 1./ieve << endl ;
   return histos ;
@@ -312,17 +368,26 @@ int main (int argc, char **argv)
   gROOT->SetStyle ("Plain") ;
 
   int N_MG = 50000 ;
-  float XS_MG = 10. ; /* fb */
+  float XS_MG = 207.03 * 0.22 * 0.22  ; /* fb */
   map<string, TH1F *> hmap_MG = 
     readSample ("/Users/govoni/data/TP/compareEWK/WW/madgraph.lhe", "MG", N_MG) ;
 
-  int N_PH = 20000 ;
-  float XS_PH = 8.9 ; /* fb */
+  float XS_MGBB = 232.37 * 0.22 * 0.22 ; /* fb */
+//  int N_MGBB = 10000 ;
+//  map<string, TH1F *> hmap_MGBB = 
+//    readSample ("/Users/govoni/data/TP/compareEWK/WW/madgraph_bb.lhe", "MGBB", N_MGBB) ;
+  int N_MGBB = 400000 ; // max = 490.000 
+  map<string, TH1F *> hmap_MGBB = 
+    readSample ("/Users/govoni/data/TP/Madgraph_bbar_WW_SS_QED4_QCD0_DECAY/total.lhe", "MGBB", N_MGBB) ;
+
+  int N_PH = 79904 ;
+  float XS_PH = 8.262 ; /* fb */
   map<string, TH1F *> hmap_PH = 
     readSample ("/Users/govoni/data/TP/compareEWK/WW/phantom.lhe", "PH", N_PH) ;
 
   TFile outfile ("testWW.root", "recreate") ;
   savemap (hmap_MG,  outfile,  XS_MG * 1./N_MG) ;  /*result in fb */
+  savemap (hmap_MGBB,  outfile,  XS_MGBB * 1./N_MGBB) ;  /*result in fb */
   savemap (hmap_PH,  outfile,  XS_PH * 1./N_PH) ;  /*result in fb */
   
   gStyle->SetStatStyle (0) ; 
@@ -339,21 +404,26 @@ int main (int argc, char **argv)
   c1.SetTopMargin (0.1) ; 
   
   map<string, TH1F *>::iterator iMap_PH = hmap_PH.begin () ;
+  map<string, TH1F *>::iterator iMap_MG = hmap_MG.begin () ;
 
   // plotting
-  for (map<string, TH1F *>::iterator iMap_MG = hmap_MG.begin () ;
-       iMap_MG != hmap_MG.end () ;
-       ++iMap_MG)
+  for (map<string, TH1F *>::iterator iMap_MGBB = hmap_MGBB.begin () ;
+       iMap_MGBB != hmap_MGBB.end () ;
+       ++iMap_MGBB)
     {
+      iMap_MGBB->second->SetStats (0) ;
       iMap_MG->second->SetStats (0) ;
       iMap_PH->second->SetStats (0) ;
       
+      iMap_MGBB->second->SetTitle ("") ;
       iMap_MG->second->SetTitle ("") ;
       iMap_PH->second->SetTitle ("") ;
       
+      iMap_MGBB->second->SetLineWidth (2) ;
       iMap_MG->second->SetLineWidth (2) ;
       iMap_PH->second->SetLineWidth (2) ;
       
+      iMap_MGBB->second->SetLineColor (2) ;
       iMap_MG->second->SetLineColor (30) ;
       iMap_PH->second->SetLineColor (9) ;
       
@@ -363,14 +433,18 @@ int main (int argc, char **argv)
       leg.SetNColumns (3) ;
       leg.SetLineStyle (0) ;
       leg.SetFillStyle (0) ;
+      leg.AddEntry (iMap_MGBB->second, "madgraph NEW", "fl") ;
       leg.AddEntry (iMap_MG->second, "madgraph", "fl") ;
       leg.AddEntry (iMap_PH->second, "phantom", "fl") ;
       
+      iMap_MGBB->second->GetXaxis ()->SetTitle (iMap_MGBB->first.c_str ()) ;        
       iMap_MG->second->GetXaxis ()->SetTitle (iMap_MG->first.c_str ()) ;        
       iMap_PH->second->GetXaxis ()->SetTitle (iMap_PH->first.c_str ()) ;        
       iMap_PH->second->Draw () ;           
       iMap_MG->second->Draw ("same") ;           
+      iMap_MGBB->second->Draw ("same") ;           
       iMap_MG->second->DrawCopy ("histsame") ;   
+      iMap_MGBB->second->DrawCopy ("histsame") ;   
       iMap_PH->second->SetFillStyle (3001) ;
       iMap_PH->second->SetFillColor (9) ;
       iMap_PH->second->DrawCopy ("E2same") ;           
@@ -378,14 +452,16 @@ int main (int argc, char **argv)
       iMap_PH->second->SetFillColor (0) ;
       iMap_PH->second->Draw ("same") ;           
       leg.Draw () ;
-      c1.Print (("WW_" + iMap_MG->first + ".png").c_str (), "png") ;
+      c1.Print (("WW_" + iMap_MGBB->first + ".png").c_str (), "png") ;
       iMap_PH->second->DrawNormalized ("E2") ;           
       iMap_MG->second->DrawNormalized ("histsame") ;   
+      iMap_MGBB->second->DrawNormalized ("histsame") ;   
       iMap_PH->second->DrawNormalized ("E2same") ;           
       leg.Draw () ;
       c1.Print (("WW_" + iMap_MG->first + "_norm.png").c_str (), "png") ;
 
       ++iMap_PH ;
+      ++iMap_MG ;
     }   
   
   return 0 ;
