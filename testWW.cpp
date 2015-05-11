@@ -258,8 +258,8 @@ readSample (string sampleName, string radice, int maxevents = -1)
       if (finalNeutrinos.size () != 2) continue ;
       if (finalLeptons.size () != 2) continue ;
 
-      if (fabs (initialParticlesPDGId.at (0)) > 4) continue ;
-      if (fabs (initialParticlesPDGId.at (1)) > 4) continue ;
+//      if (fabs (initialParticlesPDGId.at (0)) > 4) continue ;
+//      if (fabs (initialParticlesPDGId.at (1)) > 4) continue ;
 
       // the following remove events with guons as initial particles
 //      if (fabs (initialParticlesPDGId.at (0)) > 6) continue ;
@@ -301,8 +301,8 @@ readSample (string sampleName, string radice, int maxevents = -1)
       if (mjj < 625) continue ;
       if (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) < 2.5) continue ;
       if (mll < 40) continue ;
-      if (mll > 85 && mll < 95) continue ;
-      if (tl_met.Pt () > 40) continue ;
+      if (mll > 81 && mll < 101) continue ;
+      if (tl_met.Pt () < 40) continue ;
       if (fabs (finalLeptons.at (0).Eta () - finalLeptons.at (1).Eta ()) > 2) continue ;
       float etamin = min (finalJets.at (0).Eta (), finalJets.at (1).Eta ()) ;
       float etamax = max (finalJets.at (0).Eta (), finalJets.at (1).Eta ()) ;
