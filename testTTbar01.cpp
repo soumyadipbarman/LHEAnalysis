@@ -14,9 +14,9 @@
 #include "TLegend.h"
 #include "TLorentzVector.h"
 #include <cmath>
-#include "hFactory.h"
-#include "h2Factory.h"
-#include "hFunctions.h"
+//#include "hFactory.h"
+//#include "h2Factory.h"
+//#include "hFunctions.h"
 
 #include <map>
 #include <vector>
@@ -165,6 +165,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
   TH1F * h_vbf1_phi  = addHistoToMap (histos, string ("vbf1_phi_")   + radice, 30, -3.14, 3.14) ;
                                                                     
   TH1F * h_mjj_vbf   = addHistoToMap (histos, string ("mjj_vbf_")    + radice, 80, 0, 4000) ;
+  TH1F * h_detajj_vbf= addHistoToMap (histos, string ("detajj_vbf_") + radice, 80, 0, 8) ;
     
   int ieve = 0 ;
   // loop over events
@@ -240,6 +241,7 @@ readSample (string sampleName, string radice, int maxevents = -1)
 
       float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
       h_mjj_vbf->Fill (mjj) ;
+      h_detajj_vbf->Fill (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ())) ;
 
     } // loop over events
     
