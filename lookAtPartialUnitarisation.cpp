@@ -9,9 +9,9 @@
 #include "TLegend.h"
 #include "TLorentzVector.h"
 #include <cmath>
-#include "hFactory.h"
-#include "h2Factory.h"
-#include "hFunctions.h"
+//#include "hFactory.h"
+//#include "h2Factory.h"
+//#include "hFunctions.h"
 
 #include <map>
 #include <vector>
@@ -95,6 +95,7 @@ TH1F *
 addHistoToMap (map<string, TH1F *> & hmap, string name, string radice, int bin, float min, float max)
 {
   TH1F * dummy = new TH1F ((name + "_" + radice).c_str (), (name + "_" + radice).c_str (), bin, min, max) ;
+  dummy->GetXaxis ()->SetTitle (name.c_str ()) ;
   dummy->Sumw2 () ;
   hmap[name] = dummy ;
   return dummy ;
@@ -145,18 +146,35 @@ readSample (string sampleName, string radice, int maxevents = -1, TH1F * weight_
   
   map<string, TH1F *> histos ;
 
-  TH1F * h_vbf0_eta    = addHistoToMap (histos, string ("vbf0_eta")     , radice, 10, 0, 6) ;
-  TH1F * h_vbf0_pt     = addHistoToMap (histos, string ("vbf0_pt")      , radice, 10, 0, 400) ;
-  TH1F * h_vbf0_phi    = addHistoToMap (histos, string ("vbf0_phi")     , radice, 10, -3.14, 3.14) ;
-                                                                        
-  TH1F * h_vbf1_eta    = addHistoToMap (histos, string ("vbf1_eta")     , radice, 10, 0, 6) ;
-  TH1F * h_vbf1_pt     = addHistoToMap (histos, string ("vbf1_pt")      , radice, 10, 0, 250) ;
-  TH1F * h_vbf1_phi    = addHistoToMap (histos, string ("vbf1_phi")     , radice, 10, -3.14, 3.14) ;
-                                                                        
-  TH1F * h_mjj_vbf     = addHistoToMap (histos, string ("mjj_vbf")      , radice, 15, 0, 4000) ;
-  TH1F * h_deta_vbf    = addHistoToMap (histos, string ("deta_vbf")     , radice, 15, 0, 10) ;
+  TH1F * h_vbf0_eta   = addHistoToMap (histos, string ("vbf0_eta")   , radice, 10, 0, 6) ;
+  TH1F * h_vbf0_pt    = addHistoToMap (histos, string ("vbf0_pt")    , radice, 20, 0, 400) ;
+  TH1F * h_vbf0_phi   = addHistoToMap (histos, string ("vbf0_phi")   , radice, 15, -3.14, 3.14) ;
+                                                                     
+  TH1F * h_vbf1_eta   = addHistoToMap (histos, string ("vbf1_eta")   , radice, 10, 0, 6) ;
+  TH1F * h_vbf1_pt    = addHistoToMap (histos,  string ("vbf1_pt")   , radice, 12, 0, 250) ;
+  TH1F * h_vbf1_phi   = addHistoToMap (histos, string ("vbf1_phi")   , radice, 15, -3.14, 3.14) ;
+                      
+  TH1F * h_lep0_eta   = addHistoToMap (histos, string ("lep0_eta")   , radice, 20, -6, 6) ;
+  TH1F * h_lep0_pt    = addHistoToMap (histos, string ("lep0_pt")    , radice, 10, 0, 400) ;
+  TH1F * h_lep0_phi   = addHistoToMap (histos, string ("lep0_phi")   , radice, 15, -3.14, 3.14) ;                                                                    
+                      
+  TH1F * h_lep1_eta   = addHistoToMap (histos, string ("lep1_eta")   , radice, 20, -6, 6) ;
+  TH1F * h_lep1_pt    = addHistoToMap (histos, string ("lep1_pt")    , radice, 12, 0, 250) ;
+  TH1F * h_lep1_phi   = addHistoToMap (histos, string ("lep1_phi")   , radice, 15, -3.14, 3.14) ;
+                                                                     
+  TH1F * h_met_eta    = addHistoToMap (histos, string ("met_eta")    , radice, 20, -6, 6) ;
+  TH1F * h_met_pt     = addHistoToMap (histos, string ("met_pt")     , radice, 12, 0, 250) ;
+  TH1F * h_met_phi    = addHistoToMap (histos, string ("met_phi")    , radice, 15, -3.14, 3.14) ;
+                                                                     
+  TH1F * h_dphijj_vbf = addHistoToMap (histos, string ("dphijj_vbf") , radice, 8, 0, 3.14) ;
+  TH1F * h_mjj_vbf    = addHistoToMap (histos, string ("mjj_vbf")    , radice, 12, 0, 2500) ;
+  TH1F * h_NJ         = addHistoToMap (histos, string ("NJ")         , radice, 5, 0, 5) ;
+  TH1F * h_deta_vbf   = addHistoToMap (histos, string ("deta_vbf")    , radice, 15, 0, 10) ;
+                      
+  TH1F * h_mll        = addHistoToMap (histos, string ("mll")        , radice, 25, 0, 2500) ;
+  TH1F * h_m4l        = addHistoToMap (histos, string ("m4l")        , radice, 20, 0, 2275) ;
 
-  TH1F * h_mll         = addHistoToMap (histos, string ("mll")          , radice, 15, 0, 600) ;
+
 
   int ieve = 0 ;
   // loop over events
@@ -227,51 +245,84 @@ readSample (string sampleName, string radice, int maxevents = -1, TH1F * weight_
       float weight = 1. ;
       if (weight_histo != 0)
          weight = weight_histo->GetBinContent (weight_histo->GetXaxis ()->FindBin (higgs.at (0).Pt ())) ;
-
+         
+      if (finalJets.size () != 2) continue ;
+      if (finalNeutrinos.size () != 2) continue ;
       if (finalLeptons.size () != 2) continue ;
+
+      sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
+      if (finalJets.at (0).Pt () < 20) continue ;
+      if (finalJets.at (1).Pt () < 20) continue ;
+      if (finalJets.at (0).E () < 20) continue ;
+      if (finalJets.at (1).E () < 20) continue ;
+      if (fabs (finalJets.at (0).Eta ()) > 6.5) continue ;
+      if (fabs (finalJets.at (1).Eta ()) > 6.5) continue ;
+
+      sort (finalLeptons.rbegin (), finalLeptons.rend (), ptSort ()) ;
       if (finalLeptons.at (0).Pt () < 20) continue ;
       if (finalLeptons.at (1).Pt () < 20) continue ;
+      if (finalLeptons.at (0).E () < 20) continue ;
+      if (finalLeptons.at (1).E () < 20) continue ;
+      if (fabs (finalLeptons.at (0).Eta ()) > 4) continue ;
+      if (fabs (finalLeptons.at (1).Eta ()) > 4) continue ;
 
-      if (finalJets.size () < 2) continue ;
-      sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;      
-      if (finalJets.at (0).Pt () < 30) continue ;
-      if (finalJets.at (1).Pt () < 30) continue ;
-
-      float mjj = (finalJets.at (0) + finalJets.at (1)).M () ;
+      TLorentzVector tl_diJet = finalJets.at (0) + finalJets.at (1) ;
+      float mjj = tl_diJet.M () ;
+      if (mjj < 300) continue ;
       float detajj = fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) ;
-      float detall = fabs (finalLeptons.at (0).Eta () - finalLeptons.at (1).Eta ()) ;
+      if (detajj < 2) continue ;
+      float m4l = (finalNeutrinos.at (0) + finalLeptons.at (0) + finalLeptons.at (1) + finalNeutrinos.at (0)).M () ;
+      if (m4l < 130) continue ;
 
-      if (mjj < 700) continue ;
-      if (detajj < 3) continue ;
-      if (detall > 2) continue ;
+      TLorentzVector tl_met = finalNeutrinos.at (0) + finalNeutrinos.at (1) ;
+      h_met_eta->Fill (tl_met.Eta ()) ;            
+      h_met_phi->Fill (tl_met.Phi ()) ;            
+      h_met_pt-> Fill (tl_met.Pt ()) ;        
+
+      TLorentzVector tl_diLepton = finalLeptons.at (0) + finalLeptons.at (1) ;
+      float mll = tl_diLepton.M () ;
+ 
+      // end of pre-selections
       
-      float MET = (finalNeutrinos.at (0) + finalNeutrinos.at (1)).Pt () ;
-      if (MET < 20) continue ;
+      if (mjj < 625) continue ;
+      if (fabs (finalJets.at (0).Eta () - finalJets.at (1).Eta ()) < 2.5) continue ;
+      if (mll < 40) continue ;
+      if (mll > 81 && mll < 101) continue ;
+      if (tl_met.Pt () < 40) continue ;
+      if (fabs (finalLeptons.at (0).Eta () - finalLeptons.at (1).Eta ()) > 2) continue ;
+      float etamin = min (finalJets.at (0).Eta (), finalJets.at (1).Eta ()) ;
+      float etamax = max (finalJets.at (0).Eta (), finalJets.at (1).Eta ()) ;
+      for (int i = 0 ; i < finalLeptons.size () ; ++i)
+        {
+          if (finalLeptons.at (i).Eta () > etamax) continue ;
+          if (finalLeptons.at (i).Eta () < etamin) continue ;
+        }      
+      if (tl_diLepton.DeltaR (tl_diJet) > 6) continue ;
+
+      // end of analysis-like selection
       
-      float mll = (finalLeptons.at (0) + finalLeptons.at (1)).M () ;
+      h_NJ->Fill (finalJets.size ()) ;
 
-      h_mll->Fill (mll, weight) ;
+      h_vbf0_eta->Fill (finalJets.at (0).Eta ()) ;            
+      h_vbf0_phi->Fill (finalJets.at (0).Phi ()) ;            
+      h_vbf0_pt-> Fill (finalJets.at (0).Pt ()) ;        
 
-      // get the tag jets
-      sort (finalJets.rbegin (), finalJets.rend (), ptSort ()) ;
-      sort (finalQuarks.rbegin (), finalQuarks.rend (), ptSort ()) ;
+      h_vbf1_eta->Fill (finalJets.at (1).Eta ()) ;            
+      h_vbf1_phi->Fill (finalJets.at (1).Phi ()) ;            
+      h_vbf1_pt-> Fill (finalJets.at (1).Pt ()) ;        
 
-//      cout << "Njs = " << finalJets.size () << "\n" ;
-//      cout << "pts: " 
-//           << finalJets.at (0).Pt () 
-//           << "\t"
-//           << finalJets.at (1).Pt () 
-//           << "\n" ;
-        
-      h_vbf0_eta->Fill (fabs (finalJets.at (0).Eta ()), weight) ;            
-      h_vbf0_phi->Fill (finalJets.at (0).Phi (), weight) ;            
-      h_vbf0_pt-> Fill (finalJets.at (0).Pt (), weight) ;        
+      h_lep0_eta->Fill (finalLeptons.at (0).Eta ()) ;            
+      h_lep0_phi->Fill (finalLeptons.at (0).Phi ()) ;            
+      h_lep0_pt-> Fill (finalLeptons.at (0).Pt ()) ;        
 
-      h_vbf1_eta->Fill (fabs (finalJets.at (1).Eta ()), weight) ;            
-      h_vbf1_phi->Fill (finalJets.at (1).Phi (), weight) ;            
-      h_vbf1_pt-> Fill (finalJets.at (1).Pt (), weight) ;        
+      h_lep1_eta->Fill (finalLeptons.at (1).Eta ()) ;            
+      h_lep1_phi->Fill (finalLeptons.at (1).Phi ()) ;            
+      h_lep1_pt-> Fill (finalLeptons.at (1).Pt ()) ;        
 
-      h_mjj_vbf->Fill (mjj, weight) ;
+      h_mjj_vbf->Fill (mjj) ;
+      h_mll->Fill (mll) ;
+      h_m4l->Fill (m4l) ;
+      h_dphijj_vbf->Fill (deltaPhi (finalJets.at (0).Phi (), finalJets.at (1).Phi ())) ;
       h_deta_vbf->Fill (detajj, weight) ;
 
     } // loop over events
@@ -292,19 +343,19 @@ int main (int argc, char **argv)
 
   int N_SMH_tot = NTOT ;
   map<string, TH1F *> hmap_SMH = 
-    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_126/total.lhe", "SMH", N_SMH_tot) ;
+    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_126_sample/total.lhe", "SMH", N_SMH_tot) ;
 
   int N_0p9_tot = NTOT ;
   map<string, TH1F *> hmap_0p9 = 
-    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_C0p9_126/total.lhe", "0p9", N_0p9_tot) ;
+    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_C0p9_126_sample/total.lhe", "0p9", N_0p9_tot) ;
 
   int N_0p5_tot = NTOT ;
   map<string, TH1F *> hmap_0p5 = 
-    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_C0p5_126/total.lhe", "0p5", N_0p5_tot) ;
+    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_C0p5_126_sample/total.lhe", "0p5", N_0p5_tot) ;
 
   int N_noH_tot = NTOT ;
   map<string, TH1F *> hmap_noH = 
-    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_noH/total.lhe", "noH", N_noH_tot) ;
+    readSample ("/Users/govoni/data/TP/phantom/gen_TP_uvev_noH_sample/total.lhe", "noH", N_noH_tot) ;
 
   string outFolderName = "lookAtPartialUnitarisation_plots/";
   system (Form ("mkdir -p %s", outFolderName.c_str ())) ;

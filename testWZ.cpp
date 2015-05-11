@@ -483,10 +483,16 @@ int main (int argc, char **argv)
 
   LHAPDF::initPDF (0) ;
 
-  int N_MG = 10000 ;
-  float XS_MG = 660.19 * 0.2 * 0.067 ; /* fb */ 
+  //FIXME change file, number of events, total XS
+  int N_MG = 100000 ;
+  float XS_MG = 335.79 * 0.2 * 0.067 ; /* fb */ 
   map<string, TH1F *> hmap_MG = 
-    readSample ("/Users/govoni/data/TP/compareEWK/WZ/madgraph_new.lhe", "MG", N_MG, doPdfReweight) ;
+    readSample ("/Users/govoni/data/TP/compareEWK/WZ/Madgraph_WZ_QED4_QCD0_DECAY/total.lhe", "MG", N_MG, doPdfReweight) ;
+
+  int N_MGBB = 100000 ;
+  float XS_MGBB = 660.19 * 0.2 * 0.067 ; /* fb */ 
+  map<string, TH1F *> hmap_MGBB = 
+    readSample ("/Users/govoni/data/TP/compareEWK/WZ/Madgraph_bbar_WZ_QED4_QCD0_DECAY/total.lhe", "MGBB", N_MGBB, doPdfReweight) ;
 
   int N_PH = 79938 ;
   float XS_PH = 7.854 ; /* fb */
@@ -495,6 +501,7 @@ int main (int argc, char **argv)
 
   TFile outfile ("testWZ.root", "recreate") ;
   savemap (hmap_MG,  outfile,  XS_MG * 1./N_MG) ;  /*result in fb */
+  savemap (hmap_MGBB,  outfile,  XS_MGBB * 1./N_MGBB) ;  /*result in fb */
   savemap (hmap_PH,  outfile,  XS_PH * 1./N_PH) ;  /*result in fb */
   
   gStyle->SetStatStyle (0) ; 
@@ -511,21 +518,26 @@ int main (int argc, char **argv)
   c1.SetTopMargin (0.1) ; 
   
   map<string, TH1F *>::iterator iMap_PH = hmap_PH.begin () ;
+  map<string, TH1F *>::iterator iMap_MG = hmap_MG.begin () ;
 
   // plotting
-  for (map<string, TH1F *>::iterator iMap_MG = hmap_MG.begin () ;
-       iMap_MG != hmap_MG.end () ;
-       ++iMap_MG)
+  for (map<string, TH1F *>::iterator iMap_MGBB = hmap_MGBB.begin () ;
+       iMap_MGBB != hmap_MGBB.end () ;
+       ++iMap_MGBB)
     {
+      iMap_MGBB->second->SetStats (0) ;
       iMap_MG->second->SetStats (0) ;
       iMap_PH->second->SetStats (0) ;
       
+      iMap_MGBB->second->SetTitle ("") ;
       iMap_MG->second->SetTitle ("") ;
       iMap_PH->second->SetTitle ("") ;
       
+      iMap_MGBB->second->SetLineWidth (2) ;
       iMap_MG->second->SetLineWidth (2) ;
       iMap_PH->second->SetLineWidth (2) ;
       
+      iMap_MGBB->second->SetLineColor (2) ;
       iMap_MG->second->SetLineColor (30) ;
       iMap_PH->second->SetLineColor (9) ;
       
@@ -535,14 +547,18 @@ int main (int argc, char **argv)
       leg.SetNColumns (3) ;
       leg.SetLineStyle (0) ;
       leg.SetFillStyle (0) ;
+      leg.AddEntry (iMap_MGBB->second, "madgraph NEW", "fl") ;
       leg.AddEntry (iMap_MG->second, "madgraph", "fl") ;
       leg.AddEntry (iMap_PH->second, "phantom", "fl") ;
       
+      iMap_MGBB->second->GetXaxis ()->SetTitle (iMap_MGBB->first.c_str ()) ;        
       iMap_MG->second->GetXaxis ()->SetTitle (iMap_MG->first.c_str ()) ;        
       iMap_PH->second->GetXaxis ()->SetTitle (iMap_PH->first.c_str ()) ;        
       iMap_PH->second->Draw () ;           
       iMap_MG->second->Draw ("same") ;           
+      iMap_MGBB->second->Draw ("same") ;           
       iMap_MG->second->DrawCopy ("histsame") ;   
+      iMap_MGBB->second->DrawCopy ("histsame") ;   
       iMap_PH->second->SetFillStyle (3001) ;
       iMap_PH->second->SetFillColor (9) ;
       iMap_PH->second->DrawCopy ("E2same") ;           
@@ -550,19 +566,16 @@ int main (int argc, char **argv)
       iMap_PH->second->SetFillColor (0) ;
       iMap_PH->second->Draw ("same") ;           
       leg.Draw () ;
-      
-      if (TString (iMap_MG->second->GetName ()).Contains ("mllOS_")) c1.SetLogy () ;
-      
-      c1.Print (("WZ_" + iMap_MG->first + ".png").c_str (), "png") ;
+      c1.Print (("WZ_" + iMap_MGBB->first + ".png").c_str (), "png") ;
       iMap_PH->second->DrawNormalized ("E2") ;           
       iMap_MG->second->DrawNormalized ("histsame") ;   
+      iMap_MGBB->second->DrawNormalized ("histsame") ;   
       iMap_PH->second->DrawNormalized ("E2same") ;           
       leg.Draw () ;
-      c1.Print (("WZ_" + iMap_MG->first + "_norm.png").c_str (), "png") ;
-
-      if (TString (iMap_MG->second->GetName ()).Contains ("mllOS_")) c1.SetLogy (0) ;
+      c1.Print (("WZ_" + iMap_MGBB->first + "_norm.png").c_str (), "png") ;
 
       ++iMap_PH ;
+      ++iMap_MG ;
     }   
   
   return 0 ;
