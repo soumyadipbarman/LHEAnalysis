@@ -1,4 +1,4 @@
-// g++ LHEreader LHEreader.C LHEF.h -L/home/soumyadip/govoni/ `root-config --cflags --libs`
+// g++ -o LHEreader LHEreader.C LHEF.h -L/home/soumyadip/govoni/ `root-config --cflags --libs`
 // ./LHEreader events.lhe
 #include <iostream>
 #include <cstdlib>
